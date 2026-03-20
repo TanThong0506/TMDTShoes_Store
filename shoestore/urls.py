@@ -21,6 +21,7 @@ from . import views  # Import views từ thư mục shoestore hiện tại
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+<<<<<<< HEAD
     # Trang chủ
     path('', views.home, name='home'),
     
@@ -28,5 +29,11 @@ urlpatterns = [
     path('help/', views.help_page, name='help'), 
     
     # Kết nối tới App products
+=======
+    # Trang chủ (khớp với domain.com/)
+    path('', views.home, name='home'),
+    
+    # Kết nối tới App products (khớp với domain.com/products/)
+>>>>>>> main
     path('products/', include('products.urls')), 
 ]

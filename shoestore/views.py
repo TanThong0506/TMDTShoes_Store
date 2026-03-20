@@ -1,4 +1,5 @@
 from django.shortcuts import render
+<<<<<<< HEAD
 from products.models import Product  # Đảm bảo đường dẫn import đúng app products
 
 def home(request):
@@ -19,3 +20,8 @@ def home(request):
 def help_page(request):
     # Hàm xử lý cho trang trợ giúp mà bạn vừa làm layout
     return render(request, 'help.html')
+=======
+
+def home(request):
+    return render(request, 'home.html')
+>>>>>>> main
