@@ -6,6 +6,43 @@
     <title>{% block title %}Shoe Store{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<<<<<<< HEAD
+    
+    <style>
+        .navbar-logo {
+            transition: transform 0.3s ease; /* Hiệu ứng mượt khi di chuột */
+            /* Vì logo dạng badge tròn, ta thêm chút shadow cho nổi */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        .navbar-brand:hover .navbar-logo {
+            transform: scale(1.1) rotate(5deg); /* Phóng to và xoay nhẹ khi hover */
+        }
+        .navbar-logo-text {
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <img src="/static/images/logo.png" alt="Shoe Store Logo" width="50" height="50" class="d-inline-block align-text-top me-2 navbar-logo">
+            <span class="navbar-logo-text">
+                <span class="text-white">SHOE</span><span class="text-warning">STORE</span>
+            </span>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Trang chủ</a></li>
+=======
 </head>
 <body>
 
@@ -16,6 +53,7 @@
         <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
+>>>>>>> main
                 <li class="nav-item"><a class="nav-link" href="/products/">Sản phẩm</a></li>
                 <li class="nav-item"><a class="nav-link" href="/help/">Trợ giúp</a></li>
             </ul>
@@ -37,8 +75,13 @@
     {% block content %} {% endblock %}
 </div>
 
+<<<<<<< HEAD
+<footer class="text-center py-4 border-top mt-5 bg-light">
+    <p class="mb-0">© 2026 Shoe Store - Dự án Django</p>
+=======
 <footer class="text-center py-4 border-top mt-5">
     <p>© 2026 Shoe Store - Dự án Django</p>
+>>>>>>> main
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

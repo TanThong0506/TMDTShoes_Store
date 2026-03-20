@@ -1,6 +1,14 @@
 from django.shortcuts import render  
 from .models import Product, Brand, Category # Đảm bảo đã import các model này nếu bạn dùng chúng
+<<<<<<< HEAD
+from django.shortcuts import render
 
+def home(request):
+    latest_products = Product.objects.all().order_by('-id')[:4]
+    return render(request, 'home.html', {'latest_products': latest_products})
+=======
+
+>>>>>>> main
 def product_list(request):
     # Giả sử bạn đang lấy dữ liệu như thế này:
     products = Product.objects.all()
