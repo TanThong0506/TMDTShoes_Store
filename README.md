@@ -109,6 +109,7 @@ Django quản lý database qua:
 
 makemigrations → migrate
 👨‍💻 Tác giả
+Thong
 
 Project: TMDT Shoes Store
 
