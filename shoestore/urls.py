@@ -14,6 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+"""
+URL configuration for shoestore project.
+"""
+"""
+URL configuration for shoestore project.
+"""
 from django.contrib import admin
 from django.urls import path, include
 from . import views  # Import views từ thư mục shoestore hiện tại
@@ -21,19 +27,15 @@ from . import views  # Import views từ thư mục shoestore hiện tại
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-<<<<<<< HEAD
     # Trang chủ
     path('', views.home, name='home'),
     
-    # Trang trợ giúp (MỚI THÊM)
+    # Trang trợ giúp 
     path('help/', views.help_page, name='help'), 
     
-    # Kết nối tới App products
-=======
-    # Trang chủ (khớp với domain.com/)
-    path('', views.home, name='home'),
+    # TRANG SALE (MỚI THÊM)
+    path('sale/', views.sale_page, name='sale'),
     
-    # Kết nối tới App products (khớp với domain.com/products/)
->>>>>>> main
+    # Kết nối tới App products
     path('products/', include('products.urls')), 
 ]

@@ -1,76 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-<<<<<<< HEAD
-<div class="p-5 mb-4 bg-light rounded-3 shadow-sm border-0 position-relative" 
-     style="background: url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') no-repeat center center; background-size: cover; min-height: 450px;">
-    <div class="container-fluid py-5 text-white" style="background: rgba(0,0,0,0.4); border-radius: 15px;">
-        <h1 class="display-4 fw-bold">Bước Chân Phong Cách</h1>
-        <p class="col-md-8 fs-4">Khám phá bộ sưu tập giày mới nhất 2026 với công nghệ êm ái vượt trội.</p>
-        <a href="{% url 'products:list' %}" class="btn btn-warning btn-lg px-4 fw-bold shadow">Mua Ngay <i class="fas fa-arrow-right"></i></a>
+<div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
+     style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
+    <div class="container text-center">
+        <h1 class="display-3 fw-bold mb-3">EVERYDAY SNEAKER</h1>
+        <p class="fs-4 mb-4">Nâng tầm phong cách mỗi ngày cùng bộ sưu tập mới nhất.</p>
+        <a href="{% url 'products:list' %}" class="btn btn-warning btn-lg px-5 fw-bold rounded-pill">MUA NGAY</a>
     </div>
 </div>
 
-<div class="row text-center my-5">
-    <div class="col-md-4">
-        <div class="p-3">
-            <i class="fas fa-truck fa-3x text-primary mb-3"></i>
-            <h5>Giao hàng nhanh</h5>
-            <p class="text-muted">Nhận hàng chỉ trong 24h nội thành.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="p-3">
-            <i class="fas fa-undo fa-3x text-success mb-3"></i>
-            <h5>Đổi trả 7 ngày</h5>
-            <p class="text-muted">Hoàn tiền nếu không vừa ý.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="p-3">
-            <i class="fas fa-shield-alt fa-3x text-danger mb-3"></i>
-            <h5>Hàng chính hãng</h5>
-            <p class="text-muted">Cam kết 100% từ các thương hiệu lớn.</p>
-        </div>
-    </div>
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
+    <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
 </div>
-
-<hr class="my-5">
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">🔥 Sản phẩm mới nhất</h2>
-    <a href="{% url 'products:list' %}" class="text-decoration-none text-dark fw-bold">Xem tất cả <i class="fas fa-chevron-right"></i></a>
-</div>
-
-<div class="row">
-    {% for shoe in latest_products %}
-    <div class="col-md-3 mb-4">
-        <div class="card h-100 border-0 shadow-sm hover-card">
-            <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" alt="{{ shoe.name }}" style="height: 200px;">
-            <div class="card-body text-center">
-                <h6 class="text-muted small mb-1">{{ shoe.brand.name }}</h6>
-                <h5 class="card-title h6 fw-bold text-truncate">{{ shoe.name }}</h5>
-                <p class="text-danger fw-bold mb-0">{{ shoe.price }} VNĐ</p>
+    
+    <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
+        {% for shoe in sale_products %}
+        <div class="card border-0 shadow-sm flex-shrink-0" style="width: 200px;">
+            <div class="position-relative">
+                <span class="position-absolute top-0 start-0 badge bg-danger m-2">-{{ shoe.get_sale_percent }}%</span>
+                <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
             </div>
-            <div class="card-footer bg-white border-0 pb-3">
-                <a href="#" class="btn btn-outline-dark btn-sm w-100">Chi tiết</a>
+            <div class="card-body p-2 text-center">
+                <h6 class="small fw-bold text-truncate mb-1">{{ shoe.name }}</h6>
+                <p class="small mb-0">
+                    <span class="text-danger fw-bold">{{ shoe.discount_price }}đ</span>
+                    <small class="text-muted text-decoration-line-through">{{ shoe.price }}đ</small>
+                </p>
             </div>
         </div>
+        {% empty %}
+        <p class="text-muted">Đang cập nhật khuyến mãi...</p>
+        {% endfor %}
     </div>
-    {% empty %}
-    <p class="text-center text-muted">Đang cập nhật sản phẩm mới...</p>
-    {% endfor %}
+</div>
+
+<div class="mb-5">
+    <h3 class="fw-bold mb-4 text-center">DANH MỤC PHỔ BIẾN</h3>
+    <div class="row g-3">
+        {% for cat in categories %}
+        <div class="col-6 col-md-3">
+            <a href="/products/?category={{ cat.id }}" class="text-decoration-none">
+                <div class="card bg-dark text-white border-0 overflow-hidden hover-zoom text-center py-4">
+                    <div class="card-img-overlay d-flex align-items-center justify-content-center bg-dark bg-opacity-25">
+                        <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
+                    </div>
+                    <div style="height: 80px;"></div> </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-5">
+    <h3 class="fw-bold mb-4"><i class="fas fa-star text-warning"></i> SẢN PHẨM MỚI</h3>
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+        {% for shoe in latest_products %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">{{ shoe.brand.name }}</p>
+                    <h6 class="fw-bold text-truncate">{{ shoe.name }}</h6>
+                    <p class="text-danger fw-bold mb-0">{{ shoe.price }} VNĐ</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
 <style>
-    .hover-card { transition: all 0.3s; }
-    .hover-card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; }
+    /* CSS cho cuộn ngang mượt mà */
+    .custom-scroll::-webkit-scrollbar { height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    .custom-scroll { scrollbar-width: thin; -ms-overflow-style: none; }
+    
+    .hover-card { transition: 0.3s; }
+    .hover-card:hover { transform: translateY(-5px); }
+    
+    .hover-zoom { transition: 0.3s; background-color: #333; }
+    .hover-zoom:hover { background-color: #000; transform: scale(1.02); }
 </style>
-=======
-
-<h2>Welcome to Shoe Store</h2>
-
-<p>Best shoes collection</p>
-
->>>>>>> main
 {% endblock %}
