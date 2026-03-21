@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.humanize',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -85,7 +86,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3307',
+        'PORT': '3306',
     }
 }
 
@@ -197,4 +198,10 @@ JAZZMIN_UI_TWEAKS = {
     
     # TÍNH NĂNG ĂN TIỀN NHẤT: Cố định nút LƯU ở trên cùng màn hình
     "actions_sticky_top": True 
+    
 }
+# --- CẤU HÌNH ĐỊNH DẠNG SỐ (THÊM VÀO DƯỚI CÙNG) ---
+USE_L10N = False
+USE_THOUSAND_SEPARATOR = True
+THOUSAND_SEPARATOR = ','
+NUMBER_GROUPING = 3

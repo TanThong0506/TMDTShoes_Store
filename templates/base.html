@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load static %} <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* 1. Hiệu ứng cho Logo */
+        /* 1. Hiệu ứng cho Logo - Giữ nguyên của Nam và thêm mượt mà */
         .navbar-logo {
             transition: transform 0.3s ease;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            object-fit: contain; /* Đảm bảo logo không bị méo */
         }
         .navbar-brand:hover .navbar-logo {
             transform: scale(1.1) rotate(5deg);
@@ -52,13 +53,72 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             color: #fff !important;
         }
+        /* 4. CSS cho các nút chọn Size */
+        .size-wrapper {
+            margin-bottom: 5px;
+        }
+        .size-btn {
+            width: 50px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+            background-color: #fff;
+            color: #333;
+        }
+        .size-btn:hover {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        .btn-check:checked + .size-btn {
+            border-color: #ff0000 !important;
+            color: #ff0000 !important;
+            background-color: #fff !important;
+            border-width: 2px;
+            position: relative;
+        }
+        .btn-check:checked + .size-btn::after {
+            content: '✓';
+            position: absolute;
+            bottom: -2px;
+            right: 2px;
+            font-size: 10px;
+            color: #ff0000;
+        }
+
+        /* 5. Hiệu ứng cho nút Mua ngay & Giỏ hàng */
+        .btn-cart-custom {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-cart-custom:hover {
+            background-color: #000;
+            transform: translateY(-2px);
+        }
+        .btn-buy-now {
+            border: 2px solid #333;
+            color: #333;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-buy-now:hover {
+            background-color: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+        }
     </style>
 </head>
-<body class="bg-light"> <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+<body class="bg-light"> 
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
     <div class="container">
         
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-            <img src="/static/images/logo.png" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo">
             <span class="navbar-logo-text text-white">SHOE<span class="text-warning">STORE</span></span>
         </a>
         

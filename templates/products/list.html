@@ -1,28 +1,39 @@
 {% extends "base.html" %}
-
-{% block content %}
-<div class="container-fluid">
-    <form method="GET" action="{% url 'products:list' %}" id="filter-form">
+{% load humanize %} {% block content %}
+<div class="container-fluid mt-4">
+    <form method="GET" action="{% url 'products:product_list' %}" id="filter-form">
         <div class="row">
             <div class="col-md-9 order-2 order-md-1">
                 <div class="row">
                     {% for shoe in products %}
                     <div class="col-md-4 col-sm-6 mb-4">
-                        <div class="card h-100 shadow-sm border-0 product-card">
-                            <img src="{{ shoe.image.url }}" class="card-img object-fit-cover" alt="{{ shoe.name }}" style="height: 250px;">
-                            <div class="card-body text-center d-flex flex-column">
-                                <p class="text-muted small mb-1">{{ shoe.brand.name }}</p>
-                                <h5 class="card-title h6 fw-bold">{{ shoe.name }}</h5>
-                                <p class="text-danger fw-bold mb-2">{{ shoe.price }} VNĐ</p>
+                        <div class="card h-100 shadow-sm border-0 product-card overflow-hidden">
+                            <a href="{% url 'products:product_detail' shoe.id %}">
+                                <img src="{{ shoe.image.url }}" class="card-img object-fit-cover" alt="{{ shoe.name }}" style="height: 280px; transition: 0.5s;">
+                            </a>
+                            
+                            <div class="card-body text-center d-flex flex-column p-3">
+                                <p class="text-muted small mb-1 text-uppercase" style="letter-spacing: 1px;">{{ shoe.brand.name }}</p>
+                                <h5 class="card-title h6 fw-bold mb-2" style="height: 40px; overflow: hidden;">{{ shoe.name }}</h5>
+                                
+                                <div class="d-flex justify-content-center align-items-center mb-3">
+                                    <span class="text-danger fw-bold fs-5">{{ shoe.price|intcomma }}₫</span>
+                                    {% if shoe.old_price %}
+                                        <del class="text-muted small ms-2">{{ shoe.old_price|intcomma }}₫</del>
+                                    {% endif %}
+                                </div>
                                 
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-center flex-wrap gap-1">
                                         {% for s in shoe.sizes.all %}
-                                        <span class="badge border text-dark fw-normal" style="font-size: 0.7rem; background-color: #f8f9fa;">{{ s.value }}</span>
+                                        <span class="badge border text-dark fw-normal" style="font-size: 0.65rem; background-color: #f8f9fa;">{{ s.value }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
-                                <a href="#" class="btn btn-dark btn-sm w-100 mt-auto">Xem chi tiết</a>
+                                
+                                <a href="{% url 'products:product_detail' shoe.id %}" class="btn btn-dark btn-sm w-100 mt-auto py-2 fw-bold">
+                                    XEM CHI TIẾT
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -37,12 +48,12 @@
 
             <div class="col-md-3 order-1 order-md-2 mb-4">
                 <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
-                    <div class="card-header bg-dark text-white">
-                        <i class="fas fa-filter"></i> Bộ lọc tìm kiếm
+                    <div class="card-header bg-dark text-white py-3">
+                        <i class="fas fa-filter me-2"></i> BỘ LỌC TÌM KIẾM
                     </div>
                     
                     <div class="card-body p-3">
-                        <h6 class="fw-bold small mb-3">Thương hiệu</h6>
+                        <h6 class="fw-bold small mb-3 text-uppercase">Thương hiệu</h6>
                         {% for brand in brands %}
                         <div class="form-check mb-2">
                             <input class="form-check-input filter-checkbox" type="checkbox" name="brand" value="{{ brand.id }}" id="brand{{ brand.id }}" 
@@ -53,7 +64,7 @@
 
                         <hr>
 
-                        <h6 class="fw-bold small mb-3">Loại giày</h6>
+                        <h6 class="fw-bold small mb-3 text-uppercase">Loại giày</h6>
                         {% for cat in categories %}
                         <div class="form-check mb-2">
                             <input class="form-check-input filter-checkbox" type="checkbox" name="category" value="{{ cat.id }}" id="cat{{ cat.id }}"
@@ -64,20 +75,20 @@
 
                         <hr>
 
-                        <h6 class="fw-bold small mb-3">Kích thước (Size)</h6>
+                        <h6 class="fw-bold small mb-3 text-uppercase">Kích thước (Size)</h6>
                         <div class="d-flex flex-wrap gap-2">
                             {% for size in all_sizes %}
                             <div class="size-filter-item">
                                 <input type="checkbox" name="size" value="{{ size.id }}" id="size{{ size.id }}" class="btn-check filter-checkbox"
                                 {% if size.id|stringformat:"s" in request.GET.getlist %}checked{% endif %}>
-                                <label class="btn btn-outline-dark btn-sm p-1 px-2" style="font-size: 0.75rem;" for="size{{ size.id }}">{{ size.value }}</label>
+                                <label class="btn btn-outline-dark btn-sm p-1 px-2" style="font-size: 0.7rem;" for="size{{ size.id }}">{{ size.value }}</label>
                             </div>
                             {% endfor %}
                         </div>
 
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-dark w-100 btn-sm mb-2">Áp dụng bộ lọc</button>
-                            <a href="{% url 'products:list' %}" class="btn btn-outline-secondary w-100 btn-sm text-decoration-none">Xóa tất cả</a>
+                            <button type="submit" class="btn btn-dark w-100 btn-sm mb-2 fw-bold">ÁP DỤNG</button>
+                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary w-100 btn-sm text-decoration-none">Xóa tất cả</a>
                         </div>
                     </div>
                 </div>
@@ -86,18 +97,19 @@
     </form>
 </div>
 
+<style>
+    .product-card { transition: all 0.3s ease; cursor: pointer; }
+    .product-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important; }
+    .product-card:hover img { transform: scale(1.05); }
+    .object-fit-cover { object-fit: cover; }
+    .btn-dark { letter-spacing: 1px; }
+</style>
+
 <script>
-    // Tự động submit form khi tích vào checkbox
     document.querySelectorAll('.filter-checkbox').forEach(item => {
         item.addEventListener('change', event => {
             document.getElementById('filter-form').submit();
         });
     });
 </script>
-
-<style>
-    .product-card { transition: all 0.3s ease; }
-    .product-card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-    .object-fit-cover { object-fit: cover; }
-</style>
 {% endblock %}
