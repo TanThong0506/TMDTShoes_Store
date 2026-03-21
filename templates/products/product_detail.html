@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load humanize %} {% block content %}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+
+<div class="container mt-5 bg-white p-4 rounded shadow-sm">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="product-main-slider mb-3 border rounded overflow-hidden shadow-sm">
+                <div class="main-img-item">
+                    <img src="{{ product.image.url }}" class="img-fluid w-100" style="height: 480px; object-fit: cover;">
+                </div>
+                {% for p_img in product.images.all %}
+                <div class="main-img-item">
+                    <img src="{{ p_img.image.url }}" class="img-fluid w-100" style="height: 480px; object-fit: cover;">
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="product-thumb-slider px-4">
+                <div class="thumb-item px-1">
+                    <img src="{{ product.image.url }}" class="img-thumbnail" style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                </div>
+                {% for p_img in product.images.all %}
+                <div class="thumb-item px-1">
+                    <img src="{{ p_img.image.url }}" class="img-thumbnail" style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <nav class="small text-muted mb-2">Trang chủ / {{ product.category.name }} / {{ product.name }}</nav>
+            <h1 class="fw-bold h2 mb-1">{{ product.name }} 
+                {% if product.stock_status %}
+                    <span class="badge bg-success" style="font-size: 0.4em; vertical-align: middle;">Còn Hàng</span>
+                {% else %}
+                    <span class="badge bg-danger" style="font-size: 0.4em; vertical-align: middle;">Hết Hàng</span>
+                {% endif %}
+            </h1>
+            <p class="text-primary small mb-3"><i class="fas fa-check-circle"></i> Authentic 100%</p>
+
+            <div class="d-flex align-items-center mb-4">
+                <span class="text-danger fs-2 fw-bold">{{ product.price|intcomma }}₫</span>
+                {% if product.old_price %}
+                    <del class="text-muted ms-3 fs-5">{{ product.old_price|intcomma }}₫</del>
+                {% endif %}
+            </div>
+
+            <form method="POST"> {% csrf_token %}
+                <div class="mb-4">
+                    <p class="fw-bold mb-2">Kích thước (Size): <a href="#" class="text-muted small fw-normal ms-2 text-decoration-underline">Hướng dẫn chọn size</a></p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for size in product.sizes.all %}
+                            <input type="radio" name="size" id="s-{{ size.id }}" value="{{ size.value }}" class="btn-check" required>
+                            <label class="btn btn-outline-dark px-3 fw-bold" for="s-{{ size.id }}">{{ size.value }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-3">
+                        <input type="number" name="quantity" class="form-control py-2 text-center" value="1" min="1">
+                    </div>
+                    <div class="col-9">
+                        <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase">THÊM VÀO GIỎ HÀNG</button>
+                    </div>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <div class="row text-center mt-4">
+                <div class="col-4">
+                    <div class="icon-wrapper mx-auto">
+                        <span class="icon-badge">x2</span>
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Đóng gói cẩn thận double box</p>
+                </div>
+                <div class="col-4">
+                    <div class="icon-wrapper mx-auto">
+                        <span class="icon-badge">7</span>
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Miễn phí đổi hàng trong 07 ngày</p>
+                </div>
+                <div class="col-4">
+                    <div class="icon-wrapper mx-auto">
+                        <span class="icon-badge"><i class="fas fa-bolt" style="font-size: 10px;"></i></span>
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Giao hàng nhanh toàn quốc</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 pt-4 border-top">
+        <h4 class="fw-bold mb-3"><i class="fas fa-file-alt me-2"></i>Mô tả sản phẩm</h4>
+        <div class="p-4 bg-light rounded shadow-sm mb-5" style="white-space: pre-line;">
+            {{ product.description }}
+        </div>
+
+        <h4 class="fw-bold mb-4"><i class="fas fa-star text-warning me-2"></i>Đánh giá khách hàng</h4>
+        <div class="row">
+            {% for review in product.reviews.all %}
+                <div class="col-md-6 mb-3">
+                    <div class="p-3 border rounded shadow-sm">
+                        <div class="text-warning mb-1">
+                            {% for i in "12345"|make_list %}
+                                <i class="{% if i|add:0 <= review.rating %}fas{% else %}far{% endif %} fa-star"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0 text-dark small">{{ review.comment }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted text-center py-3">Chưa có đánh giá nào.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Icon Service Nằm Ngang */
+    .icon-wrapper {
+        width: 60px; height: 60px;
+        border: 2px solid #b24b4b; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        position: relative; font-size: 24px; color: #333;
+    }
+    .icon-badge {
+        position: absolute; top: -5px; left: -5px;
+        background: #b24b4b; color: white;
+        width: 22px; height: 22px; border-radius: 50%;
+        font-size: 10px; font-weight: bold;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid #fff;
+    }
+
+    /* Slide Styles */
+    .slick-prev:before, .slick-next:before { display: none; }
+    .thumb-item img { border: 2px solid transparent; opacity: 0.6; transition: 0.3s; }
+    .slick-current .thumb-item img { border-color: #000; opacity: 1; }
+    .btn-check:checked + .btn-outline-dark { background-color: #000; color: #fff; }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('.product-main-slider').slick({
+            slidesToShow: 1, arrows: false, fade: true, asNavFor: '.product-thumb-slider'
+        });
+        $('.product-thumb-slider').slick({
+            slidesToShow: 4, asNavFor: '.product-main-slider', focusOnSelect: true,
+            prevArrow: '<button type="button" class="slick-prev" style="left:-15px"><i class="fas fa-chevron-left text-dark"></i></button>',
+            nextArrow: '<button type="button" class="slick-next" style="right:-15px"><i class="fas fa-chevron-right text-dark"></i></button>',
+        });
+    });
+</script>
+{% endblock %}

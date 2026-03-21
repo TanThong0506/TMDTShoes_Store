@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load humanize %} {% block content %}
+<div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
+     style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
+    <div class="container text-center">
+        <h1 class="display-3 fw-bold mb-3">EVERYDAY SNEAKER</h1>
+        <p class="fs-4 mb-4">Nâng tầm phong cách mỗi ngày cùng bộ sưu tập mới nhất.</p>
+        <a href="{% url 'products:product_list' %}" class="btn btn-warning btn-lg px-5 fw-bold rounded-pill">MUA NGAY</a>
+    </div>
+</div>
+
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
+    <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
+</div>
+    
+    <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
+        {% for shoe in sale_products %}
+        <div class="card border-0 shadow-sm flex-shrink-0" style="width: 200px;">
+            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
+                <div class="position-relative">
+                    <span class="position-absolute top-0 start-0 badge bg-danger m-2">-{{ shoe.get_sale_percent }}%</span>
+                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
+                </div>
+                <div class="card-body p-2 text-center">
+                    <h6 class="small fw-bold text-truncate mb-1">{{ shoe.name }}</h6>
+                    <p class="small mb-0">
+                        <span class="text-danger fw-bold">{{ shoe.price|intcomma }}đ</span>
+                        {% if shoe.old_price %}
+                            <small class="text-muted text-decoration-line-through">{{ shoe.old_price|intcomma }}đ</small>
+                        {% endif %}
+                    </p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-5">
+    <h3 class="fw-bold mb-4 text-center">DANH MỤC PHỔ BIẾN</h3>
+    <div class="row g-3">
+        {% for cat in categories %}
+        <div class="col-6 col-md-3">
+            <a href="/products/?category={{ cat.id }}" class="text-decoration-none">
+                <div class="card bg-dark text-white border-0 overflow-hidden hover-zoom text-center py-4">
+                    <div class="card-img-overlay d-flex align-items-center justify-content-center bg-dark bg-opacity-25">
+                        <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
+                    </div>
+                    <div style="height: 80px;"></div> </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-5">
+    <h3 class="fw-bold mb-4"><i class="fas fa-star text-warning"></i> SẢN PHẨM MỚI</h3>
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+        {% for shoe in latest_products %} <div class="col"> <div class="card h-100 border-0 shadow-sm hover-card">
+                <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
+                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
+                    <div class="card-body">
+                        <p class="text-muted small mb-1">{{ shoe.brand.name }}</p>
+                        <h6 class="fw-bold text-truncate">{{ shoe.name }}</h6>
+                        <p class="text-danger fw-bold mb-0">{{ shoe.price|intcomma }} VNĐ</p>
+                        <div class="btn btn-outline-dark btn-sm w-100 mt-2">Xem chi tiết</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* CSS cho cuộn ngang mượt mà */
+    .custom-scroll::-webkit-scrollbar { height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    .custom-scroll { scrollbar-width: thin; -ms-overflow-style: none; }
+    
+    .hover-card { transition: 0.3s; }
+    .hover-card:hover { transform: translateY(-5px); }
+    
+    .hover-zoom { transition: 0.3s; background-color: #333; }
+    .hover-zoom:hover { background-color: #000; transform: scale(1.02); }
+</style>
+{% endblock %}

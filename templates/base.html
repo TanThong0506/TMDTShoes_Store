@@ -1,0 +1,185 @@
+{% load static %} <!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shoe Store{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* 1. Hiệu ứng cho Logo - Giữ nguyên của Nam và thêm mượt mà */
+        .navbar-logo {
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            object-fit: contain; /* Đảm bảo logo không bị méo */
+        }
+        .navbar-brand:hover .navbar-logo {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .navbar-logo-text {
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        /* 2. Hiệu ứng gạch chân mượt mà cho các link thường */
+        .nav-link-custom {
+            position: relative;
+        }
+        .nav-link-custom::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 5px;
+            left: 50%;
+            background-color: #fff;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        .nav-link-custom:hover::after {
+            width: 70%;
+        }
+        
+        /* 3. Hiệu ứng nổi bồng bềnh cho nút Sale */
+        .btn-sale-premium {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .btn-sale-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #fff !important;
+        }
+        /* 4. CSS cho các nút chọn Size */
+        .size-wrapper {
+            margin-bottom: 5px;
+        }
+        .size-btn {
+            width: 50px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+            background-color: #fff;
+            color: #333;
+        }
+        .size-btn:hover {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        .btn-check:checked + .size-btn {
+            border-color: #ff0000 !important;
+            color: #ff0000 !important;
+            background-color: #fff !important;
+            border-width: 2px;
+            position: relative;
+        }
+        .btn-check:checked + .size-btn::after {
+            content: '✓';
+            position: absolute;
+            bottom: -2px;
+            right: 2px;
+            font-size: 10px;
+            color: #ff0000;
+        }
+
+        /* 5. Hiệu ứng cho nút Mua ngay & Giỏ hàng */
+        .btn-cart-custom {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-cart-custom:hover {
+            background-color: #000;
+            transform: translateY(-2px);
+        }
+        .btn-buy-now {
+            border: 2px solid #333;
+            color: #333;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-buy-now:hover {
+            background-color: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="bg-light"> 
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <div class="container">
+        
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo">
+            <span class="navbar-logo-text text-white">SHOE<span class="text-warning">STORE</span></span>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto align-items-center gap-1 mt-3 mt-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="{% url 'home' %}">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="/products/">Sản phẩm</a>
+                </li>
+                
+                <li class="nav-item mx-lg-3 my-2 my-lg-0">
+                    <a class="nav-link btn-sale-premium bg-danger text-white rounded-pill px-4 py-2 d-flex align-items-center shadow-sm" href="{% url 'sale' %}">
+                        <i class="fas fa-fire text-warning me-2 fs-6"></i> 
+                        <span class="fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 0.5px;">Khuyến Mãi</span>
+                        <span class="badge bg-white text-danger rounded-pill ms-2 shadow-sm" style="font-size: 0.65rem; padding: 0.4em 0.6em;">HOT</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="{% url 'help' %}">Trợ giúp</a>
+                </li>
+            </ul>
+
+            <form class="d-flex mx-auto my-3 my-lg-0" action="/products/search/" method="GET">
+                <div class="input-group">
+                    <input class="form-control border-0 bg-secondary text-white placeholder-light" style="--bs-bg-opacity: .2;" type="search" name="q" placeholder="Tìm giày...">
+                    <button class="btn btn-warning fw-bold px-3" type="submit"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+
+            <ul class="navbar-nav ms-auto align-items-center gap-3 mt-3 mt-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom text-white fw-semibold px-2" style="font-size: 0.95rem;" href="/cart/">
+                        <i class="fas fa-shopping-cart fs-5 align-middle me-1"></i> Giỏ hàng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light rounded-pill px-4 fw-bold" style="font-size: 0.9rem;" href="/users/login/">
+                        Đăng nhập
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 min-vh-100"> {% block content %} {% endblock %}
+</div>
+
+<footer class="text-center py-4 border-top mt-5 bg-white shadow-sm">
+    <div class="container">
+        <p class="mb-0 text-muted fw-semibold">© 2026 Shoe Store - Nâng bước thành công</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
