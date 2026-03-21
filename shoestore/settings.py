@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -111,12 +112,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# Đổi từ 'en-us' sang 'vi' (viết tắt của Việt Nam)
+LANGUAGE_CODE = 'vi'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Sẵn tiện đổi luôn múi giờ về Việt Nam cho chuẩn nhé
 
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -129,3 +130,71 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ==========================================
+# CẤU HÌNH GIAO DIỆN ADMIN JAZZMIN (TỐI ƯU)
+# ==========================================
+
+JAZZMIN_SETTINGS = {
+    # 1. Thông tin chung
+    "site_title": "Shoe Store Admin",
+    "site_header": "Shoe Store",
+    "site_brand": "SHOE STORE",
+    "welcome_sign": "Hệ thống Quản trị Shoe Store 👟",
+    "copyright": "Shoe Store © 2026",
+
+    # 2. Thanh Menu Top (Thêm nút bấm nhanh)
+    "topmenu_links": [
+        {"name": "Xem trang web",  "url": "/", "new_window": True}, # Click là mở sang trang khách hàng
+        {"model": "auth.User"},
+    ],
+
+    # 3. Thanh Tìm kiếm siêu tốc (Tìm cả User lẫn Sản phẩm cùng lúc)
+    "search_model": ["auth.User", "products.Product"],
+
+    # 4. Gắn icon xịn xò cho từng bảng
+    "icons": {
+        "auth": "fas fa-shield-alt",
+        "auth.user": "fas fa-user-cog",
+        "auth.Group": "fas fa-users",
+        "products": "fas fa-box-open",
+        "products.Product": "fas fa-shoe-prints",
+        "products.Category": "fas fa-tags",
+        "products.Brand": "fas fa-copyright",
+        "products.Size": "fas fa-ruler",
+        "orders": "fas fa-shopping-cart",
+        "cart": "fas fa-shopping-basket",
+        "users": "fas fa-users",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+
+    # 5. Tinh chỉnh Layout Menu
+    "show_sidebar": True,
+    "navigation_expanded": False, # Thu gọn menu con cho đỡ rối mắt
+    "related_modal_active": True, # Cho phép thêm mới dữ liệu dạng Popup cực tiện
+}
+
+# ==========================================
+# BẢNG PHỐI MÀU (UI TWEAKS) - PHONG CÁCH SNEAKER
+# ==========================================
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    
+    # Phối màu
+    "brand_colour": "navbar-dark",         # Nền logo màu đen
+    "navbar": "navbar-dark",               # Thanh Topbar màu đen
+    "sidebar": "sidebar-dark-danger",      # Menu trái màu đen, khi chọn hiện màu đỏ rực
+    "accent": "accent-danger",             # Các nút bấm chính chuyển sang màu đỏ (hợp bán giày)
+    "theme": "lumen",                      # Nền bảng dữ liệu màu trắng sáng/sạch sẽ
+    
+    # Cấu trúc cố định (Scrolling mượt)
+    "navbar_fixed": True,
+    "sidebar_fixed": True,
+    "sidebar_nav_child_indent": True,
+    
+    # TÍNH NĂNG ĂN TIỀN NHẤT: Cố định nút LƯU ở trên cùng màn hình
+    "actions_sticky_top": True 
+}
