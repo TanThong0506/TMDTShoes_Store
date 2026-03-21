@@ -3,7 +3,7 @@ from products.models import Product, Category  # Đừng quên import Category n
 
 def home(request):
     # 1. Sản phẩm khuyến mãi (Lấy ngẫu nhiên 10 món để cuộn ngang)
-    sale_products = Product.objects.filter(discount_price__gt=0).order_by('?')[:10]
+    sale_products = Product.objects.filter(old_price__gt=0).order_by('?')[:10]
     
     # 2. Danh mục phổ biến (Lấy 4 loại hiển thị ra trang chủ)
     categories = Category.objects.all()[:4]
@@ -24,7 +24,7 @@ def help_page(request):
     return render(request, 'help.html')
 
 # THÊM HÀM NÀY ĐỂ XỬ LÝ TRANG KHUYẾN MÃI (SALE)
+# SỬA LẠI HÀM NÀY
 def sale_page(request):
-    # Lấy toàn bộ sản phẩm đang có giá khuyến mãi
-    sale_items = Product.objects.filter(discount_price__gt=0).order_by('-id')
+    sale_items = Product.objects.filter(old_price__gt=0).order_by('-id')
     return render(request, 'sale.html', {'sale_items': sale_items})

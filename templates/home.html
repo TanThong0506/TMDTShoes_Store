@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %} 
 
 {% block content %}
 <div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
@@ -6,48 +7,46 @@
     <div class="container text-center">
         <h1 class="display-3 fw-bold mb-3">EVERYDAY SNEAKER</h1>
         <p class="fs-4 mb-4">Nâng tầm phong cách mỗi ngày cùng bộ sưu tập mới nhất.</p>
-        <a href="{% url 'products:list' %}" class="btn btn-warning btn-lg px-5 fw-bold rounded-pill">MUA NGAY</a>
+        <a href="{% url 'products:product_list' %}" class="btn btn-warning btn-lg px-5 fw-bold rounded-pill">MUA NGAY</a>
     </div>
 </div>
 
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
-    <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
-</div>
+        <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
+        <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
+    </div>
     
     <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
         {% for shoe in sale_products %}
-        <div class="card border-0 shadow-sm flex-shrink-0" style="width: 200px;">
-            <div class="position-relative">
-                <span class="position-absolute top-0 start-0 badge bg-danger m-2">-{{ shoe.get_sale_percent }}%</span>
-                <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
+        <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
+            <div class="card border-0 shadow-sm flex-shrink-0" style="width: 200px;">
+                <div class="position-relative">
+                    <span class="position-absolute top-0 start-0 badge bg-danger m-2">-{{ shoe.get_sale_percent }}%</span>
+                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
+                </div>
+                <div class="card-body p-2 text-center">
+                    <h6 class="small fw-bold text-truncate mb-1">{{ shoe.name }}</h6>
+                    <div class="mb-0">
+                        <span class="text-danger fw-bold">{{ shoe.discount_price|intcomma }}<u>đ</u></span>
+                        <small class="text-muted text-decoration-line-through ms-1">{{ shoe.price|intcomma }}<u>đ</u></small>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-2 text-center">
-                <h6 class="small fw-bold text-truncate mb-1">{{ shoe.name }}</h6>
-                <p class="small mb-0">
-                    <span class="text-danger fw-bold">{{ shoe.discount_price }}đ</span>
-                    <small class="text-muted text-decoration-line-through">{{ shoe.price }}đ</small>
-                </p>
-            </div>
-        </div>
-        {% empty %}
-        <p class="text-muted">Đang cập nhật khuyến mãi...</p>
+        </a>
         {% endfor %}
     </div>
 </div>
 
-<div class="mb-5">
-    <h3 class="fw-bold mb-4 text-center">DANH MỤC PHỔ BIẾN</h3>
+<div class="mb-5 text-center">
+    <h3 class="fw-bold mb-4">DANH MỤC PHỔ BIẾN</h3>
     <div class="row g-3">
         {% for cat in categories %}
         <div class="col-6 col-md-3">
             <a href="/products/?category={{ cat.id }}" class="text-decoration-none">
-                <div class="card bg-dark text-white border-0 overflow-hidden hover-zoom text-center py-4">
-                    <div class="card-img-overlay d-flex align-items-center justify-content-center bg-dark bg-opacity-25">
-                        <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
-                    </div>
-                    <div style="height: 80px;"></div> </div>
+                <div class="card bg-dark text-white border-0 overflow-hidden hover-zoom py-4 shadow-sm">
+                    <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
+                </div>
             </a>
         </div>
         {% endfor %}
@@ -59,29 +58,35 @@
     <div class="row row-cols-2 row-cols-md-4 g-4">
         {% for shoe in latest_products %}
         <div class="col">
-            <div class="card h-100 border-0 shadow-sm hover-card">
-                <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">{{ shoe.brand.name }}</p>
-                    <h6 class="fw-bold text-truncate">{{ shoe.name }}</h6>
-                    <p class="text-danger fw-bold mb-0">{{ shoe.price }} VNĐ</p>
+            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
+                    <div class="card-body">
+                        <p class="text-muted small mb-1 text-uppercase">{{ shoe.brand.name }}</p>
+                        <h6 class="fw-bold text-truncate">{{ shoe.name }}</h6>
+                        
+                        <div class="mt-2">
+                            {% if shoe.discount_price %}
+                                <span class="text-danger fw-bold fs-5">{{ shoe.discount_price|intcomma }}<u>đ</u></span>
+                                <small class="text-muted text-decoration-line-through ms-2">{{ shoe.price|intcomma }}<u>đ</u></small>
+                            {% else %}
+                                <span class="text-danger fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    /* CSS cho cuộn ngang mượt mà */
     .custom-scroll::-webkit-scrollbar { height: 6px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    .custom-scroll { scrollbar-width: thin; -ms-overflow-style: none; }
-    
     .hover-card { transition: 0.3s; }
-    .hover-card:hover { transform: translateY(-5px); }
-    
-    .hover-zoom { transition: 0.3s; background-color: #333; }
-    .hover-zoom:hover { background-color: #000; transform: scale(1.02); }
+    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .hover-zoom { transition: 0.3s; background-color: #212529; }
+    .hover-zoom:hover { background-color: #000 !important; transform: scale(1.05); }
 </style>
 {% endblock %}

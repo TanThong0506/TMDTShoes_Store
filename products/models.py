@@ -1,56 +1,79 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Brand(models.Model):
-    name = models.CharField(max_length=100, unique=True, verbose_name="Tên thương hiệu")
-    
-    class Meta:
-        verbose_name = "Thương hiệu"
-        verbose_name_plural = "Thương hiệu"
+    name = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='brands/', blank=True, null=True) 
+    description = models.TextField(blank=True, null=True) 
 
     def __str__(self):
         return self.name
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True, verbose_name="Tên danh mục")
-    
+    name = models.CharField(max_length=100)
     class Meta:
-        verbose_name = "Danh mục"
-        verbose_name_plural = "Danh mục"
-
+        verbose_name_plural = "Categories" 
     def __str__(self):
         return self.name
 
 class Size(models.Model):
-    value = models.CharField(max_length=10, unique=True, verbose_name="Kích thước")
+    value = models.CharField(max_length=10, unique=True) 
     
-    class Meta:
-        verbose_name = "Kích cỡ"
-        verbose_name_plural = "Kích cỡ"
-
     def __str__(self):
         return self.value
 
 class Product(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Tên sản phẩm")
-    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, verbose_name="Thương hiệu")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Danh mục")
-    sizes = models.ManyToManyField(Size, blank=True, verbose_name="Kích cỡ hiện có") 
+    name = models.CharField(max_length=200)
+    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    sizes = models.ManyToManyField(Size) 
+    price = models.IntegerField(
+        validators=[MinValueValidator(1000)], 
+        verbose_name="Giá hiện tại"
+    )
+    old_price = models.IntegerField(
+        null=True, blank=True, 
+        validators=[MinValueValidator(1000)], 
+        verbose_name="Giá cũ"
+    )
+    description = models.TextField(blank=True) 
+    image = models.ImageField(upload_to='product_images/')
     
-    price = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Giá gốc")
-    discount_price = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True, verbose_name="Giá khuyến mãi")
+    stock = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
+    is_active = models.BooleanField(default=True, verbose_name="Đang kinh doanh")
     
-    image = models.ImageField(upload_to='products/', verbose_name="Hình ảnh")
-    is_featured = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")
+    # Giữ lại trong Model để không lỗi DB nhưng sẽ ẩn ở Admin
+    payment_policy = models.TextField(blank=True, verbose_name="Chính sách thanh toán")
+    return_policy = models.TextField(blank=True, verbose_name="Chính sách đổi trả")
 
-    class Meta:
-        verbose_name = "Sản phẩm"
-        verbose_name_plural = "Sản phẩm"
+    stock_status = models.BooleanField(default=True) 
 
     def __str__(self):
         return self.name
 
-    def get_sale_percent(self):
-        if self.discount_price and self.price > 0:
-            percent = 100 - (self.discount_price / self.price * 100)
-            return int(percent)
-        return 0
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='product_images/extra/')
+    alt_text = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
+    
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+# --- MODEL QUẢN LÝ CHÍNH SÁCH RIÊNG ---
+class StorePolicy(models.Model):
+    title = models.CharField(max_length=100, default="Cấu hình chính sách chung", verbose_name="Tên cấu hình")
+    payment_policy = models.TextField(verbose_name="Nội dung Chính sách thanh toán")
+    return_policy = models.TextField(verbose_name="Nội dung Chính sách đổi trả")
+
+    class Meta:
+        verbose_name = "Chính sách cửa hàng"
+        verbose_name_plural = "Chính sách cửa hàng"
+
+    def __str__(self):
+        return self.title
