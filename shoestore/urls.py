@@ -38,4 +38,7 @@ urlpatterns = [
     
     # Kết nối tới App products
     path('products/', include('products.urls')), 
+    
+    #giỏ hàng
+     path('', include('products.urls')), 
 ]

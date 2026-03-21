@@ -1,0 +1,11 @@
+<form method="POST" action="{% url 'add_to_cart' product.id %}">
+    {% csrf_token %}
+
+    <select name="size" required>
+        {% for size in product.sizes.all %}
+            <option value="{{ size.id }}">{{ size.value }}</option>
+        {% endfor %}
+    </select>
+
+    <button>Thêm vào giỏ</button>
+</form>

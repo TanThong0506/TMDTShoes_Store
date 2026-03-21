@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container text-center mt-5">
+
+    <div class="card shadow-lg p-5 border-0">
+
+        <!-- ICON -->
+        <h1 style="font-size:70px;">✅</h1>
+
+        <!-- TITLE -->
+        <h2 class="text-success fw-bold mt-3">
+            Đặt hàng thành công!
+        </h2>
+
+        <!-- ORDER CODE -->
+        <p class="mt-3">
+            Mã đơn hàng của bạn:
+            <strong class="text-danger">{{ order_code }}</strong>
+        </p>
+
+        <!-- TOTAL -->
+        <h4 class="mt-2">
+            Tổng tiền:
+            <span class="text-danger fw-bold">
+                {{ total }} đ
+            </span>
+        </h4>
+
+        <!-- INFO -->
+        <p class="text-muted mt-3">
+            Cảm ơn bạn đã mua sắm ❤️ <br>
+            Đơn hàng sẽ được xử lý sớm nhất!
+        </p>
+
+        <!-- BUTTON -->
+        <div class="mt-4">
+            <a href="{% url 'home' %}" class="btn btn-danger px-4">
+                🛍 Tiếp tục mua sắm
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
