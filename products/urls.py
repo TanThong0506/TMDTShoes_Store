@@ -1,11 +1,15 @@
 from django.urls import path
 from . import views
+
 app_name = 'products'
+
 urlpatterns = [
-    # Trang danh sách sản phẩm (http://127.0.0.1:8000/products/)
+    # 1. Sửa lại tên thành 'product_list' để khớp chuẩn với file HTML
     path('', views.product_list, name='product_list'),
     
-    # Trang chi tiết sản phẩm (Ví dụ: http://127.0.0.1:8000/products/product/1/)
-    # <int:pk> là ID của đôi giày Nam bấm vào
+    # 2. Thêm đường dẫn cho chức năng TÌM KIẾM (Để ngay đây nhé)
+    path('search/', views.search_products, name='search'), 
+    
+    # 3. Sửa lại tên thành 'product_detail' để khớp với thẻ <a> trong HTML
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
 ]

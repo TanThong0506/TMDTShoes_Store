@@ -132,8 +132,8 @@
                     <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="{% url 'home' %}">Trang chủ</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="/products/">Sản phẩm</a>
-                </li>
+    <a class="nav-link" href="{% url 'products:product_list' %}">Sản phẩm</a>
+</li>
                 
                 <li class="nav-item mx-lg-3 my-2 my-lg-0">
                     <a class="nav-link btn-sale-premium bg-danger text-white rounded-pill px-4 py-2 d-flex align-items-center shadow-sm" href="{% url 'sale' %}">
