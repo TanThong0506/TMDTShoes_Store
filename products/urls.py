@@ -12,4 +12,6 @@ urlpatterns = [
     
     # 3. Sửa lại tên thành 'product_detail' để khớp với thẻ <a> trong HTML
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
+    # Tìm kiếm sản phẩm:
+    path('search/', views.search_products, name='search'),
 ]

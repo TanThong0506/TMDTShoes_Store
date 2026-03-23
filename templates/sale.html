@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% load humanize %} {% block title %}Siêu Sale Bùng Nổ - Shoe Store{% endblock %}
+{% load humanize %} 
+{% block title %}Siêu Sale Bùng Nổ - Shoe Store{% endblock %}
 
 {% block content %}
 <div class="position-relative overflow-hidden rounded-4 shadow-lg mb-5 text-white" 
@@ -55,9 +56,9 @@
             <i class="fas fa-sort-amount-down"></i> Sắp xếp
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#">Khuyến mãi hot nhất</a></li>
-            <li><a class="dropdown-item" href="#">Giá từ thấp đến cao</a></li>
-            <li><a class="dropdown-item" href="#">Giá từ cao đến thấp</a></li>
+            <li><a class="dropdown-item {% if current_sort == 'hot' or not current_sort %}active bg-danger text-white{% endif %}" href="?sort=hot">Khuyến mãi hot nhất</a></li>
+            <li><a class="dropdown-item {% if current_sort == 'asc' %}active bg-danger text-white{% endif %}" href="?sort=asc">Giá từ thấp đến cao</a></li>
+            <li><a class="dropdown-item {% if current_sort == 'desc' %}active bg-danger text-white{% endif %}" href="?sort=desc">Giá từ cao đến thấp</a></li>
         </ul>
     </div>
 </div>
@@ -65,45 +66,45 @@
 <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
     {% for shoe in sale_items %}
     <div class="col">
-        <div class="card h-100 border-0 shadow-sm sale-card position-relative overflow-hidden">
-            
-            <div class="position-absolute top-0 start-0 m-2" style="z-index: 2;">
-                <span class="badge bg-danger rounded-pill fs-6 px-2 py-1 pulse-badge shadow">
-                    -{{ shoe.get_sale_percent }}%
-                </span>
-            </div>
-            
-            <div class="position-absolute top-0 end-0 m-2" style="z-index: 2;">
-                <span class="badge bg-success rounded-circle p-2 shadow-sm" title="Miễn phí vận chuyển">
-                    <i class="fas fa-truck-fast"></i>
-                </span>
-            </div>
+        <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark d-block h-100">
+            <div class="card h-100 border-0 shadow-sm sale-card position-relative overflow-hidden">
+                
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 2;">
+                    <span class="badge bg-danger rounded-pill fs-6 px-2 py-1 pulse-badge shadow">
+                        -{{ shoe.get_sale_percent }}%
+                    </span>
+                </div>
+                
+                <div class="position-absolute top-0 end-0 m-2" style="z-index: 2;">
+                    <span class="badge bg-success rounded-circle p-2 shadow-sm" title="Miễn phí vận chuyển">
+                        <i class="fas fa-truck-fast"></i>
+                    </span>
+                </div>
 
-            <div class="img-wrapper overflow-hidden bg-light">
-                <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover sale-img" alt="{{ shoe.name }}" style="height: 250px;">
-            </div>
-            
-            <div class="card-body text-center d-flex flex-column">
-                <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ shoe.brand.name }}</p>
-                <h6 class="card-title fw-bold text-truncate mb-2" title="{{ shoe.name }}">{{ shoe.name }}</h6>
-                
-                <div class="mt-auto bg-light rounded-3 p-2 border border-danger border-opacity-25">
-                    <small class="text-muted text-decoration-line-through">{{ shoe.price|intcomma }}đ</small>
-                    <h5 class="text-danger fw-bold mb-0">{{ shoe.discount_price|intcomma }}đ</h5>
+                <div class="img-wrapper overflow-hidden bg-light">
+                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover sale-img" alt="{{ shoe.name }}" style="height: 250px;">
                 </div>
                 
-                <div class="progress mt-3" style="height: 6px;">
-                    <div class="progress-bar bg-danger" role="progressbar" style="width: 85%;"></div>
+                <div class="card-body text-center d-flex flex-column pb-4">
+                    <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ shoe.brand.name }}</p>
+                    <h6 class="card-title fw-bold text-truncate mb-2 sale-product-title" title="{{ shoe.name }}">{{ shoe.name }}</h6>
+                    
+                    <div class="mt-auto bg-light rounded-3 p-2 border border-danger border-opacity-25">
+                        {% if shoe.is_on_sale %}
+                            <small class="text-muted text-decoration-line-through">{{ shoe.old_price|intcomma }}đ</small>
+                            <h5 class="text-danger fw-bold mb-0">{{ shoe.price|intcomma }}đ</h5>
+                        {% else %}
+                            <small class="text-muted opacity-0">Giá gốc</small> <h5 class="text-dark fw-bold mb-0">{{ shoe.price|intcomma }}đ</h5>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 85%;"></div>
+                    </div>
+                    <small class="text-danger mt-1" style="font-size: 0.7rem;">Sắp cháy hàng!</small>
                 </div>
-                <small class="text-danger mt-1" style="font-size: 0.7rem;">Sắp cháy hàng!</small>
-            </div>
-            
-            <div class="card-footer bg-white border-0 pt-0 pb-3">
-                <a href="{% url 'products:product_detail' shoe.id %}" class="btn btn-danger w-100 fw-bold rounded-pill text-uppercase" style="letter-spacing: 1px;">
-                    Săn Ngay
-                </a>
-            </div>
-        </div>
+                </div>
+        </a>
     </div>
     {% empty %}
     <div class="col-12 text-center py-5">
@@ -117,12 +118,16 @@
 
 <style>
     /* Hiệu ứng nảy và đổ bóng cho Card */
-    .sale-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+    .sale-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border-radius: 12px; }
     .sale-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important; }
     
     /* Hiệu ứng zoom nhẹ ảnh khi hover */
     .sale-img { transition: transform 0.5s ease; }
     .sale-card:hover .sale-img { transform: scale(1.08); }
+    
+    /* Đổi màu tên sản phẩm sang đỏ khi hover */
+    .sale-card .sale-product-title { transition: color 0.3s ease; }
+    .sale-card:hover .sale-product-title { color: #dc3545; }
     
     /* Hiệu ứng nhấp nháy cho huy hiệu Giảm giá */
     @keyframes pulse {
