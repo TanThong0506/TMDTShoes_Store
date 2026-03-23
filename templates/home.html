@@ -20,36 +20,73 @@
     <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
         {% for shoe in sale_products %}
         <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-            <div class="card border-0 shadow-sm flex-shrink-0" style="width: 200px;">
-                <div class="position-relative">
-                    <span class="position-absolute top-0 start-0 badge bg-danger m-2">-{{ shoe.get_sale_percent }}%</span>
+            <div class="card border-0 shadow-sm flex-shrink-0 home-product-card" style="width: 200px;">
+                <div class="position-relative overflow-hidden" style="border-radius: 12px 12px 0 0;">
+                    {% if shoe.is_on_sale %}
+                        <span class="position-absolute top-0 start-0 badge bg-danger m-2 z-1">-{{ shoe.get_sale_percent }}%</span>
+                    {% endif %}
                     <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
                 </div>
                 <div class="card-body p-2 text-center">
-                    <h6 class="small fw-bold text-truncate mb-1">{{ shoe.name }}</h6>
-                    <div class="mb-0">
-                        <span class="text-danger fw-bold">{{ shoe.discount_price|intcomma }}<u>đ</u></span>
-                        <small class="text-muted text-decoration-line-through ms-1">{{ shoe.price|intcomma }}<u>đ</u></small>
+                    <h6 class="small fw-bold text-truncate mb-1 product-title">{{ shoe.name }}</h6>
+                    <div class="mb-0 mt-1">
+                        <span class="text-danger fw-bold">{{ shoe.price|intcomma }}<u>đ</u></span>
+                        <small class="text-muted text-decoration-line-through ms-1">{{ shoe.old_price|intcomma }}<u>đ</u></small>
                     </div>
                 </div>
             </div>
         </a>
+        {% empty %}
+        <div class="w-100 text-center py-4 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
+            <i class="fas fa-fire-extinguisher text-muted fs-2 mb-2"></i>
+            <h6 class="text-muted fw-bold mb-0">Chưa có deal nào đang cháy!</h6>
+            <small class="text-muted">Bạn hãy quay lại sau để săn sale nhé.</small>
+        </div>
         {% endfor %}
     </div>
 </div>
 
 <div class="mb-5 text-center">
-    <h3 class="fw-bold mb-4">DANH MỤC PHỔ BIẾN</h3>
-    <div class="row g-3">
-        {% for cat in categories %}
-        <div class="col-6 col-md-3">
-            <a href="/products/?category={{ cat.id }}" class="text-decoration-none">
-                <div class="card bg-dark text-white border-0 overflow-hidden hover-zoom py-4 shadow-sm">
-                    <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
-                </div>
-            </a>
+    <h3 class="fw-bold mb-4 text-uppercase">Danh Mục Phổ Biến</h3> 
+    
+    <div class="marquee-container">
+        <div class="marquee-track">
+            <div class="marquee-content">
+                {% for i in "1234"|make_list %}
+                    {% for brand in brands %}
+                    <div class="brand-item">
+                        <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
+                            <div class="card bg-white border border-light shadow-sm brand-card">
+                                {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
+                                {% else %}
+                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            <div class="marquee-content">
+                {% for i in "1234"|make_list %}
+                    {% for brand in brands %}
+                    <div class="brand-item">
+                        <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
+                            <div class="card bg-white border border-light shadow-sm brand-card">
+                                {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
+                                {% else %}
+                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -59,34 +96,127 @@
         {% for shoe in latest_products %}
         <div class="col">
             <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-                <div class="card h-100 border-0 shadow-sm hover-card">
-                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
+                <div class="card h-100 border-0 shadow-sm home-product-card">
+                    <div class="overflow-hidden" style="border-radius: 12px 12px 0 0;">
+                        <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
+                    </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-1 text-uppercase">{{ shoe.brand.name }}</p>
-                        <h6 class="fw-bold text-truncate">{{ shoe.name }}</h6>
+                        {% if shoe.brand %}
+                            <p class="text-muted small mb-1 text-uppercase">{{ shoe.brand.name }}</p>
+                        {% endif %}
+                        <h6 class="fw-bold text-truncate product-title">{{ shoe.name }}</h6>
                         
                         <div class="mt-2">
-                            {% if shoe.discount_price %}
-                                <span class="text-danger fw-bold fs-5">{{ shoe.discount_price|intcomma }}<u>đ</u></span>
-                                <small class="text-muted text-decoration-line-through ms-2">{{ shoe.price|intcomma }}<u>đ</u></small>
-                            {% else %}
+                            {% if shoe.is_on_sale %}
                                 <span class="text-danger fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
+                                <small class="text-muted text-decoration-line-through ms-2">{{ shoe.old_price|intcomma }}<u>đ</u></small>
+                            {% else %}
+                                <span class="text-dark fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
                             {% endif %}
                         </div>
+                        
                     </div>
                 </div>
             </a>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
+            <i class="fas fa-shoe-prints text-muted fa-3x mb-3"></i>
+            <h5 class="fw-bold text-muted">Gian hàng đang cập nhật</h5>
+            <p class="text-muted mb-0">Những mẫu giày mới nhất sẽ sớm được lên kệ. Bạn hãy đón chờ nhé!</p>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
+    /* Thanh cuộn (Scrollbar) cho Deal đang cháy */
     .custom-scroll::-webkit-scrollbar { height: 6px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    .hover-card { transition: 0.3s; }
-    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-    .hover-zoom { transition: 0.3s; background-color: #212529; }
-    .hover-zoom:hover { background-color: #000 !important; transform: scale(1.05); }
+    
+    /* === BỘ HIỆU ỨNG HOVER XỊN XÒ CHO SẢN PHẨM === */
+    .home-product-card { 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        border-radius: 12px;
+    }
+    
+    /* Nổi card và đổ bóng */
+    .home-product-card:hover { 
+        transform: translateY(-8px); 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.12) !important; 
+    }
+    
+    /* Zoom hình ảnh mượt mà */
+    .home-product-card img { 
+        transition: transform 0.6s ease; 
+    }
+    .home-product-card:hover img { 
+        transform: scale(1.08); 
+    }
+    
+    /* Đổi màu tiêu đề sản phẩm sang đỏ */
+    .home-product-card .product-title { 
+        transition: color 0.3s ease; 
+    }
+    .home-product-card:hover .product-title { 
+        color: #dc3545; 
+    }
+    /* ============================================== */
+
+    /* --- CSS CHO BĂNG CHUYỀN CHẠY MÃI MÃI --- */
+    .marquee-container {
+        width: 100%;
+        overflow: hidden;
+        padding: 20px 0;
+        position: relative;
+    }
+
+    .marquee-track {
+        display: flex; 
+        width: max-content; 
+        animation: scroll-marquee 30s linear infinite; 
+    }
+
+    .marquee-container:hover .marquee-track {
+        animation-play-state: paused; 
+    }
+
+    .marquee-content {
+        display: flex; 
+    }
+
+    .brand-item {
+        flex: 0 0 auto;
+        padding: 0 10px; 
+    }
+
+    .brand-card { 
+        width: 180px; 
+        height: 90px; 
+        border-radius: 12px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        transition: transform 0.3s ease;
+        background-color: #fff !important;
+    }
+
+    .brand-card:hover { 
+        transform: scale(1.08); 
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+        z-index: 10;
+    }
+
+    .brand-logo-img {
+        max-width: 80%;
+        max-height: 55px;
+        object-fit: contain;
+    }
+
+    /* Hiệu ứng lặp vô tận */
+    @keyframes scroll-marquee {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); } 
+    }
 </style>
 {% endblock %}

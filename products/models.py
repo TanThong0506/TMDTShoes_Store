@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 
 class Brand(models.Model):
     name = models.CharField(max_length=100)
@@ -11,8 +11,10 @@ class Brand(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    
     class Meta:
-        verbose_name_plural = "Categories" 
+        verbose_name_plural = "Loại sản phẩm" 
+        
     def __str__(self):
         return self.name
 
@@ -25,35 +27,62 @@ class Size(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=200)
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Chọn được nhiều Loại sản phẩm cùng lúc
+    category = models.ManyToManyField(Category, blank=True, verbose_name="Loại sản phẩm")
     sizes = models.ManyToManyField(Size) 
+    
+    # Giá tiền nhập bằng phím tự do
     price = models.IntegerField(
-        validators=[MinValueValidator(1000)], 
+        validators=[MinValueValidator(0)], 
         verbose_name="Giá hiện tại"
     )
     old_price = models.IntegerField(
         null=True, blank=True, 
-        validators=[MinValueValidator(1000)], 
-        verbose_name="Giá cũ"
+        validators=[MinValueValidator(0)], 
+        verbose_name="Giá cũ (Để trống nếu không giảm giá)"
     )
+    
     description = models.TextField(blank=True) 
-    image = models.ImageField(upload_to='product_images/')
+    
+    # Cho phép chọn nhiều định dạng ảnh khác nhau
+    image = models.ImageField(
+        upload_to='product_images/',
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'])],
+        verbose_name="Ảnh đại diện"
+    )
     
     stock = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
     is_active = models.BooleanField(default=True, verbose_name="Đang kinh doanh")
     
-    # Giữ lại trong Model để không lỗi DB nhưng sẽ ẩn ở Admin
+    # Giữ lại trong Model để không lỗi DB nhưng ẩn ở Admin
     payment_policy = models.TextField(blank=True, verbose_name="Chính sách thanh toán")
     return_policy = models.TextField(blank=True, verbose_name="Chính sách đổi trả")
 
     stock_status = models.BooleanField(default=True) 
+
+    # Hàm tiện ích kiểm tra giảm giá
+    @property
+    def is_on_sale(self):
+        return bool(self.old_price and self.old_price > self.price)
+
+    # --- HÀM TÍNH % ĐÃ ĐƯỢC BỔ SUNG VÀO ĐÂY ---
+    def get_sale_percent(self):
+        if self.old_price and self.old_price > self.price:
+            percent = ((self.old_price - self.price) / self.old_price) * 100
+            return int(percent)
+        return 0
 
     def __str__(self):
         return self.name
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='product_images/extra/')
+    image = models.ImageField(
+        upload_to='product_images/extra/',
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'])],
+        verbose_name="Ảnh phụ"
+    )
     alt_text = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):

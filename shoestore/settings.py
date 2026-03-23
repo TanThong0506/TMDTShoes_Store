@@ -86,7 +86,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3306',
+        'PORT': '3307',
     }
 }
 
@@ -125,7 +125,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+# settings.py
+
 STATIC_URL = 'static/'
+# ... (các cấu hình static nếu có)
+
+# ==========================================
+# CẤU HÌNH THƯ MỤC LƯU ẢNH (MEDIA)
+# ==========================================
+# 1. Đường dẫn trên thanh URL của trình duyệt (Ví dụ: 127.0.0.1:8000/media/...)
+MEDIA_URL = '/media/'
+
+# 2. Đường dẫn lưu file vật lý vào ổ cứng máy tính
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
