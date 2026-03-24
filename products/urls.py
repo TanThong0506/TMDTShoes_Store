@@ -4,14 +4,21 @@ from . import views
 app_name = 'products'
 
 urlpatterns = [
-    # 1. Sửa lại tên thành 'product_list' để khớp chuẩn với file HTML
     path('', views.product_list, name='product_list'),
-    
-    # 2. Thêm đường dẫn cho chức năng TÌM KIẾM (Để ngay đây nhé)
-    path('search/', views.search_products, name='search'), 
-    
-    # 3. Sửa lại tên thành 'product_detail' để khớp với thẻ <a> trong HTML
-    path('product/<int:pk>/', views.product_detail, name='product_detail'),
-    # Tìm kiếm sản phẩm:
+
     path('search/', views.search_products, name='search'),
+
+    path('product/<int:pk>/', views.product_detail, name='product_detail'),
+
+    path('<int:id>/', views.product_detail, name='product_detail'),
+
+    # Cart
+    
+    path('add-to-cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('increase/<int:item_id>/', views.increase, name='increase'),
+    path('decrease/<int:item_id>/', views.decrease, name='decrease'),
+    path('remove/<int:item_id>/', views.remove_item, name='remove_item'),
+
+    # Checkout
+    path('checkout/', views.checkout, name='checkout'),
 ]

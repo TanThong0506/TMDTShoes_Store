@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms  # <-- Bắt buộc phải import forms
 from .models import Product, ProductImage, Size, Category, Brand, Review, StorePolicy
+from .models import Product, Category, Order, OrderItem
 
 # --- 1. TẠO FORM ẢO CHO ADMIN ĐỂ THÊM Ô % GIẢM GIÁ ---
 class ProductAdminForm(forms.ModelForm):
@@ -71,6 +72,16 @@ class StorePolicyAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False if StorePolicy.objects.count() >= 1 else True
 
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'total', 'status', 'created_at')
+    list_filter = ('status',)
+    readonly_fields = ('created_at',)
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'product', 'size', 'quantity', 'price')
+    
 admin.site.register(Size)
 admin.site.register(Category)
 admin.site.register(Brand)

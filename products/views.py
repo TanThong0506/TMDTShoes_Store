@@ -1,6 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, F  # ĐÃ THÊM F: Dùng để so sánh 2 cột
 from .models import Product, Category, Brand, StorePolicy, Size
+from cart.models import Cart, CartItem
+from .models import Order, OrderItem
+from django.http import JsonResponse  # thêm import
 
 def home(request):
     # Lọc chuẩn giày Sale (Chỉ lấy những giày có giá gốc lớn hơn giá bán hiện tại)
@@ -107,3 +110,129 @@ def sale_page(request):
         'current_sort': sort_by, 
     }
     return render(request, 'sale.html', context)
+
+
+# ================= GIỎ HÀNG =================
+
+def get_cart(request):
+    cart_id = request.session.get('cart_id')
+
+    if cart_id:
+        try:
+            return Cart.objects.get(id=cart_id)
+        except Cart.DoesNotExist:
+            pass
+
+    cart = Cart.objects.create()
+    request.session['cart_id'] = cart.id
+    return cart
+
+
+def cart_view(request):
+    cart = get_cart(request)
+    items = CartItem.objects.filter(cart=cart)
+
+    total = 0
+    for item in items:
+        total += item.total_price()
+
+    return render(request, 'cart.html', {
+        'items': items,
+        'total': total
+    })
+
+
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    size_id = request.POST.get('size')
+    size = get_object_or_404(Size, id=size_id)
+
+    cart = get_cart(request)
+
+    item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        size=size
+    )
+
+    if not created:
+        item.quantity += 1
+
+    item.save()
+    return redirect('products:cart')
+
+
+def increase(request, item_id):
+    item = CartItem.objects.get(id=item_id)
+    item.quantity += 1
+    item.save()
+
+    return JsonResponse({
+        'quantity': item.quantity,
+        'total_price': item.total_price(),
+        'deleted': False
+    })
+
+
+def decrease(request, item_id):
+    item = CartItem.objects.get(id=item_id)
+
+    if item.quantity > 1:
+        item.quantity -= 1
+        item.save()
+        return JsonResponse({
+            'quantity': item.quantity,
+            'total_price': item.total_price(),
+            'deleted': False
+        })
+    else:
+        item.delete()
+        return JsonResponse({
+            'deleted': True
+        })
+
+
+def remove_item(request, item_id):
+    item = CartItem.objects.get(id=item_id)
+    item.delete()
+
+    return JsonResponse({'deleted': True})
+
+
+
+def checkout(request):
+    cart = get_cart(request)
+    items = CartItem.objects.filter(cart=cart)
+
+    if not items:
+        return redirect('products:cart')
+
+    total = sum(item.total_price() for item in items)
+
+    # 🔥 tạo đơn hàng
+    order = Order.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        total=total
+    )
+
+    # 🔥 lưu sản phẩm vào OrderItem
+    order_items = []
+    for item in items:
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            size=item.size,
+            quantity=item.quantity,
+            price=item.product.price
+        )
+        order_items.append(item)  # dùng để hiển thị chi tiết trên success.html
+
+    # ❌ xóa giỏ hàng
+    items.delete()
+
+    return render(request, 'success.html', {
+        'total': total,
+        'order_code': order.id,
+        'order_items': order_items  # gửi danh sách sản phẩm vào template
+    })

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">🛒 Giỏ hàng của bạn</h2>
+
+    {% if items %}
+
+        <table class="table table-bordered text-center align-middle shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Size</th>
+                    <th>Số lượng</th>
+                    <th>Giá</th>
+                    <th>Tổng</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in items %}
+                <tr id="item-{{ item.id }}">
+                    <td class="fw-semibold">{{ item.product.name }}</td>
+                    <td>{{ item.size.value }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity({{ item.id }}, 'decrease')">➖</button>
+                        <span id="qty-{{ item.id }}" class="mx-2 fw-bold">{{ item.quantity }}</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity({{ item.id }}, 'increase')">➕</button>
+                    </td>
+                    <td class="text-danger fw-bold">{{ item.product.price }} đ</td>
+                    <td id="total-{{ item.id }}" class="fw-bold">{{ item.total_price }} đ</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="removeItem({{ item.id }})">🗑</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h4 class="text-end mt-3">
+            Tổng tiền: <span id="cart-total" class="text-danger">{{ total }} đ</span>
+        </h4>
+
+        <div class="text-end">
+            <a href="{% url 'products:checkout' %}" class="btn btn-danger px-4">
+                Thanh toán
+            </a>
+        </div>
+
+    {% else %}
+        <div class="text-center mt-5 p-5 bg-white shadow-sm rounded">
+            <h1 style="font-size:60px;">🛒</h1>
+            <h3 class="mt-3">Không tìm thấy sản phẩm</h3>
+            <p class="text-muted">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+            <a href="{% url 'home' %}" class="btn btn-danger mt-3 px-4">Mua sắm ngay</a>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+function updateQuantity(itemId, action) {
+    fetch(`/products/${action}/${itemId}/`)
+    .then(res => res.json())
+    .then(data => {
+        if(data.deleted){
+            document.getElementById(`item-${itemId}`).remove();
+        } else {
+            document.getElementById(`qty-${itemId}`).textContent = data.quantity;
+            document.getElementById(`total-${itemId}`).textContent = data.total_price + ' đ';
+        }
+
+        // Cập nhật tổng tiền giỏ hàng
+        let total = 0;
+        document.querySelectorAll('td[id^="total-"]').forEach(td => {
+            total += parseInt(td.textContent.replace(' đ',''));
+        });
+        document.getElementById('cart-total').textContent = total + ' đ';
+    });
+}
+
+function removeItem(itemId){
+    fetch(`/products/remove/${itemId}/`)
+    .then(()=> {
+        document.getElementById(`item-${itemId}`).remove();
+        // Cập nhật tổng tiền
+        let total = 0;
+        document.querySelectorAll('td[id^="total-"]').forEach(td => {
+            total += parseInt(td.textContent.replace(' đ',''));
+        });
+        document.getElementById('cart-total').textContent = total + ' đ';
+    });
+}
+</script>
+
+{% endblock %}
