@@ -8,10 +8,14 @@ def home(request):
     popular_categories = Category.objects.all()[:4] 
     latest_products = Product.objects.all().order_by('-id')[:8]
     
+    # ĐÃ THÊM LẠI: Lấy danh sách hãng để làm băng chuyền
+    brands = Brand.objects.all() 
+    
     context = {
         'sale_products': sale_products,
         'categories': popular_categories,
         'latest_products': latest_products,
+        'brands': brands, # Truyền ra cho home.html
     }
     return render(request, 'home.html', context)
 
@@ -19,16 +23,20 @@ def product_list(request):
     # Lấy toàn bộ sản phẩm đang kinh doanh làm nền tảng ban đầu
     products = Product.objects.filter(is_active=True)
     
-    # === BẮT ĐẦU XỬ LÝ BỘ LỌC TỪ URL ===
-    brand_ids = request.GET.getlist('brand')
+    # === VALIDATION: BẮT ĐẦU XỬ LÝ BỘ LỌC TỪ URL ===
+    # Chỉ giữ lại các ID là chữ số (chống hacker hoặc lỗi gõ nhầm chữ)
+    raw_brands = request.GET.getlist('brand')
+    brand_ids = [bid for bid in raw_brands if bid.isdigit()]
     if brand_ids:
         products = products.filter(brand__id__in=brand_ids)
         
-    category_ids = request.GET.getlist('category')
+    raw_categories = request.GET.getlist('category')
+    category_ids = [cid for cid in raw_categories if cid.isdigit()]
     if category_ids:
         products = products.filter(category__id__in=category_ids)
         
-    size_ids = request.GET.getlist('size')
+    raw_sizes = request.GET.getlist('size')
+    size_ids = [sid for sid in raw_sizes if sid.isdigit()]
     if size_ids:
         products = products.filter(sizes__id__in=size_ids)
         
@@ -60,10 +68,16 @@ def product_detail(request, pk):
     return render(request, 'products/product_detail.html', context)
 
 # ==========================================
-# HÀM TÌM KIẾM SẢN PHẨM (ĐÃ NÂNG CẤP)
+# HÀM TÌM KIẾM SẢN PHẨM (ĐÃ THÊM VALIDATION)
 # ==========================================
 def search_products(request):
-    query = request.GET.get('q', '') 
+    # VALIDATION 1: Loại bỏ khoảng trắng thừa ở 2 đầu (VD: "  nike " -> "nike")
+    query = request.GET.get('q', '').strip() 
+    
+    # VALIDATION 2: Giới hạn độ dài từ khóa (Tránh việc cố tình nhập quá dài làm sập DB)
+    if len(query) > 100:
+        query = query[:100]
+
     results = [] 
 
     if query:
@@ -72,7 +86,7 @@ def search_products(request):
             Q(name__icontains=query) | 
             Q(brand__name__icontains=query) |
             Q(category__name__icontains=query) |
-            Q(sizes__value__icontains=query)  # ĐÃ FIX: Dùng sizes__value và thêm dấu |
+            Q(sizes__value__icontains=query)  
         ).distinct()
 
     context = {
@@ -82,14 +96,15 @@ def search_products(request):
     return render(request, 'products/search.html', context)
 
 # ==========================================
-# HÀM TRANG KHUYẾN MÃI (ĐÃ THÊM TÍNH NĂNG SẮP XẾP)
+# HÀM TRANG KHUYẾN MÃI (ĐÃ THÊM VALIDATION)
 # ==========================================
 def sale_page(request):
     # 1. Lọc ra các sản phẩm ĐANG GIẢM GIÁ (có giá cũ lớn hơn giá hiện tại)
     sale_items = Product.objects.filter(is_active=True, old_price__gt=F('price'))
     
     # 2. BẮT ĐẦU XỬ LÝ SẮP XẾP TỪ URL
-    sort_by = request.GET.get('sort', 'hot') # Mặc định là 'hot' nếu không bấm gì
+    # VALIDATION: Loại bỏ khoảng trắng thừa (nếu có)
+    sort_by = request.GET.get('sort', 'hot').strip() 
     
     if sort_by == 'asc':
         # Giá từ thấp đến cao
@@ -98,10 +113,12 @@ def sale_page(request):
         # Giá từ cao đến thấp
         sale_items = sale_items.order_by('-price')
     else:
-        # Khuyến mãi hot nhất (Sắp xếp theo số tiền được giảm nhiều nhất)
+        # VALIDATION: Nếu người dùng nhập linh tinh (không phải asc hay desc),
+        # tự động gán lại thành 'hot' và xếp theo khuyến mãi tốt nhất.
+        sort_by = 'hot'
         sale_items = sale_items.annotate(discount_amount=F('old_price') - F('price')).order_by('-discount_amount')
 
-    # 3. Trả về giao diện (ĐÃ SỬA: Thêm 'current_sort' vào context)
+    # 3. Trả về giao diện 
     context = {
         'sale_items': sale_items,
         'current_sort': sort_by, 
