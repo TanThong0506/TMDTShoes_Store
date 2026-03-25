@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card shadow p-5">
+        <div class="mb-4">
+            <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h1 class="display-4 text-success">Đặt hàng thành công!</h1>
+        <p class="lead">Cảm ơn <strong>{{ order.full_name }}</strong> đã tin tưởng Shoe Store.</p>
+        <hr>
+        <div class="row justify-content-center text-left">
+            <div class="col-md-6">
+                <h4 class="mb-3">Thông tin đơn hàng #{{ order.id }}</h4>
+                <p><strong>Số điện thoại:</strong> {{ order.phone }}</p>
+                <p><strong>Địa chỉ:</strong> {{ order.address }}</p>
+                <p><strong>Phương thức thanh toán:</strong> {{ order.payment_method }}</p>
+                <p class="h4 text-danger"><strong>Tổng tiền: {{ order.total_price|floatformat:0|intcomma }} VNĐ</strong></p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">Tiếp tục mua sắm</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

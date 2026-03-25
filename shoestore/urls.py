@@ -47,8 +47,12 @@ urlpatterns = [
     path('products/', include('products.urls')), 
     
     # KẾT NỐI TỚI APP USERS 
-    path('users/', include('users.urls'))
+    path('users/', include('users.urls')),
+    
+    path('cart/', include('cart.urls')), # <--- Thêm dòng này vào đây
+    path('orders/', include('orders.urls', namespace='orders')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
