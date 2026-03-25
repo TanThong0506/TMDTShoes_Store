@@ -40,6 +40,15 @@
         
         /* Tùy chỉnh thanh tìm kiếm */
         .placeholder-light::placeholder { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        
+        /* Hiệu ứng badge giỏ hàng */
+        .badge-cart {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.7rem;
+            padding: 0.25em 0.45em;
+        }
     </style>
 </head>
 <body class="bg-light"> 
@@ -80,11 +89,22 @@
 
             <ul class="navbar-nav ms-auto align-items-center gap-3">
                 <li class="nav-item">
-                    <a class="nav-link text-white fw-semibold px-2" href="/cart/">
+                    <a class="nav-link text-white fw-semibold px-2 position-relative" href="{% url 'cart:cart_detail' %}">
                         <i class="fas fa-shopping-cart fs-5 me-1"></i> Giỏ hàng
+                        <span id="cart-count" class="badge rounded-pill bg-warning text-dark badge-cart">
+                            {% if request.session.cart %}
+                                {% if request.session.cart_count %}
+                                    {{ request.session.cart_count }}
+                                {% else %}
+                                    {# Backup nếu chưa kịp cập nhật cart_count thì tự đếm #}
+                                    {{ request.session.cart|length }}
+                                {% endif %}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </span>
                     </a>
                 </li>
-                
                 {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle btn btn-outline-warning rounded-pill px-4 fw-bold text-white shadow-none" 

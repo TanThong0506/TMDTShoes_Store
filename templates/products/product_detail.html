@@ -8,12 +8,12 @@
     <div class="row">
         <div class="col-md-6">
             <div class="product-main-slider mb-3 border rounded overflow-hidden shadow-sm">
-                <div class="main-img-item">
-                    <img src="{{ product.image.url }}" class="img-fluid w-100" style="height: 480px; object-fit: cover;">
+                <div class="main-img-item text-center">
+                    <img src="{{ product.image.url }}" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;">
                 </div>
                 {% for p_img in product.images.all %}
-                <div class="main-img-item">
-                    <img src="{{ p_img.image.url }}" class="img-fluid w-100" style="height: 480px; object-fit: cover;">
+                <div class="main-img-item text-center">
+                    <img src="{{ p_img.image.url }}" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;">
                 </div>
                 {% endfor %}
             </div>
@@ -39,7 +39,7 @@
                     <span class="badge bg-danger" style="font-size: 0.4em; vertical-align: middle;">Hết Hàng</span>
                 {% endif %}
             </h1>
-            <p class="text-primary small mb-3"><i class="fas fa-check-circle"></i> Authentic 100%</p>
+            <p class="text-primary small mb-3"><i class="fas fa-check-circle"></i> Cam kết Authentic 100%</p>
 
             <div class="d-flex align-items-center mb-4">
                 <span class="text-danger fs-2 fw-bold">{{ product.price|intcomma }}₫</span>
@@ -48,9 +48,15 @@
                 {% endif %}
             </div>
 
-            <form method="POST"> {% csrf_token %}
+            <form id="add-to-cart-form" method="POST" action="{% url 'cart:add_to_cart' product.id %}"> 
+                {% csrf_token %}
                 <div class="mb-4">
-                    <p class="fw-bold mb-2">Kích thước (Size): <a href="#" class="text-muted small fw-normal ms-2 text-decoration-underline">Hướng dẫn chọn size</a></p>
+                    <p class="fw-bold mb-2">
+                        Kích thước (Size): 
+                        <a href="javascript:void(0);" class="text-muted small fw-normal ms-2 text-decoration-underline" data-bs-toggle="modal" data-bs-target="#sizeGuideModal">
+                            <i class="fas fa-ruler-combined"></i> Hướng dẫn chọn size
+                        </a>
+                    </p>
                     <div class="d-flex flex-wrap gap-2">
                         {% for size in product.sizes.all %}
                             <input type="radio" name="size" id="s-{{ size.id }}" value="{{ size.value }}" class="btn-check" required>
@@ -60,128 +66,129 @@
                 </div>
 
                 <div class="row g-2 mb-4">
-                    <div class="col-3">
+                    <div class="col-3 text-center">
+                        <label class="small text-muted mb-1">Số lượng</label>
                         <input type="number" name="quantity" class="form-control py-2 text-center" value="1" min="1">
                     </div>
-                    <div class="col-9">
-                        <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase">THÊM VÀO GIỎ HÀNG</button>
+                    <div class="col-9 d-flex align-items-end">
+                        <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase shadow-sm">THÊM VÀO GIỎ HÀNG</button>
                     </div>
                 </div>
             </form>
 
-            <hr class="my-4">
+            <hr class="my-4 text-muted">
 
             <div class="row text-center mt-4">
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto">
-                        <span class="icon-badge">x2</span>
+                    <div class="icon-wrapper mx-auto border-danger text-danger">
+                        <span class="icon-badge bg-danger">x2</span>
                         <i class="fas fa-box"></i>
                     </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Đóng gói cẩn thận double box</p>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Double Box đóng gói</p>
                 </div>
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto">
-                        <span class="icon-badge">7</span>
+                    <div class="icon-wrapper mx-auto border-warning text-warning">
+                        <span class="icon-badge bg-warning">7</span>
                         <i class="fas fa-sync-alt"></i>
                     </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Miễn phí đổi hàng trong 07 ngày</p>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">07 ngày đổi hàng</p>
                 </div>
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto">
-                        <span class="icon-badge"><i class="fas fa-bolt" style="font-size: 10px;"></i></span>
+                    <div class="icon-wrapper mx-auto border-info text-info">
+                        <span class="icon-badge bg-info"><i class="fas fa-bolt" style="font-size: 10px;"></i></span>
                         <i class="fas fa-shipping-fast"></i>
                     </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Giao hàng nhanh toàn quốc</p>
+                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Giao hàng siêu tốc</p>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="mt-5 pt-4 border-top">
-        <ul class="nav nav-tabs" id="productDetailTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-bold text-uppercase text-dark" id="mota-tab" data-bs-toggle="tab" data-bs-target="#mota" type="button" role="tab">Mô tả</button>
+        <ul class="nav nav-tabs border-0" id="productDetailTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold text-uppercase text-dark" id="mota-tab" data-bs-toggle="tab" data-bs-target="#mota" type="button" role="tab">Mô tả sản phẩm</button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold text-uppercase text-dark" id="thanh-toan-tab" data-bs-toggle="tab" data-bs-target="#thanh-toan" type="button" role="tab">Chính sách thanh toán</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold text-uppercase text-dark" id="doi-tra-tab" data-bs-toggle="tab" data-bs-target="#doi-tra" type="button" role="tab">Chính sách đổi trả</button>
+            <li class="nav-item">
+                <button class="nav-link fw-bold text-uppercase text-dark" id="thanh-toan-tab" data-bs-toggle="tab" data-bs-target="#thanh-toan" type="button" role="tab">Thanh toán</button>
             </li>
         </ul>
 
-        <div class="tab-content p-4 bg-light rounded-bottom shadow-sm mb-5" id="productDetailTabContent">
+        <div class="tab-content p-4 bg-light rounded shadow-sm mb-5" id="productDetailTabContent">
             <div class="tab-pane fade show active" id="mota" role="tabpanel">
-                <div style="white-space: pre-line;">{{ product.description }}</div>
+                <div style="white-space: pre-line; line-height: 1.6;">{{ product.description }}</div>
             </div>
-            
             <div class="tab-pane fade" id="thanh-toan" role="tabpanel">
                 <div style="white-space: pre-line;">
-                    {% if policy %}
-                        {{ policy.payment_policy }}
-                    {% else %}
-                        Nội dung đang được cập nhật...
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="doi-tra" role="tabpanel">
-                <div style="white-space: pre-line;">
-                    {% if policy %}
-                        {{ policy.return_policy }}
-                    {% else %}
-                        Nội dung đang được cập nhật...
-                    {% endif %}
+                    {% if policy %}{{ policy.payment_policy }}{% else %}Nội dung đang được cập nhật...{% endif %}
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <h4 class="fw-bold mb-4"><i class="fas fa-star text-warning me-2"></i>Đánh giá khách hàng</h4>
-        <div class="row">
-            {% for review in product.reviews.all %}
-                <div class="col-md-6 mb-3">
-                    <div class="p-3 border rounded shadow-sm">
-                        <div class="text-warning mb-1">
-                            {% for i in "12345"|make_list %}
-                                <i class="{% if i|add:0 <= review.rating %}fas{% else %}far{% endif %} fa-star"></i>
-                            {% endfor %}
-                        </div>
-                        <p class="mb-0 text-dark small">{{ review.comment }}</p>
-                    </div>
+<div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold text-uppercase"><i class="fas fa-shoe-prints me-2"></i>Bảng Quy Đổi Size Giày</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered text-center align-middle">
+                        <thead class="table-light">
+                            <tr class="fw-bold">
+                                <th>Size VN (EU)</th>
+                                <th>Chiều dài chân (cm)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="fw-bold">39</td><td>24.1 - 24.5</td></tr>
+                            <tr><td class="fw-bold">40</td><td>24.6 - 25.0</td></tr>
+                            <tr><td class="fw-bold">41</td><td>25.1 - 25.5</td></tr>
+                            <tr><td class="fw-bold">42</td><td>25.6 - 26.0</td></tr>
+                            <tr><td class="fw-bold">43</td><td>26.1 - 26.5</td></tr>
+                            <tr><td class="fw-bold">44</td><td>26.6 - 27.0</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-            {% empty %}
-                <p class="text-muted text-center py-3">Chưa có đánh giá nào.</p>
-            {% endfor %}
+                
+                <div class="mt-3 p-3 bg-light rounded border-start border-4 border-dark">
+                    <p class="fw-bold mb-1" style="font-size: 14px;"><i class="fas fa-pencil-alt me-2"></i>Mẹo nhỏ cho bạn:</p>
+                    <ul class="small mb-0">
+                        <li>Đo chân khi đi tất (vớ) để có kích thước chuẩn nhất.</li>
+                        <li>Nếu chân dày hoặc bè ngang, hãy ưu tiên <strong>tăng 0.5 - 1 size</strong>.</li>
+                        <li>Mỗi hãng giày có thể có form rộng/hẹp khác nhau.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark w-100 fw-bold" data-bs-dismiss="modal">ĐÃ HIỂU, ĐÓNG LẠI</button>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Icon Service Nằm Ngang */
+    /* CSS TRANG TRÍ ICON CHUYÊN NGHIỆP */
     .icon-wrapper {
-        width: 60px; height: 60px;
-        border: 2px solid #b24b4b; border-radius: 50%;
+        width: 65px; height: 65px;
+        border: 2px solid; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        position: relative; font-size: 24px; color: #333;
+        position: relative; font-size: 26px; transition: 0.3s;
     }
+    .icon-wrapper:hover { transform: scale(1.1); }
     .icon-badge {
         position: absolute; top: -5px; left: -5px;
-        background: #b24b4b; color: white;
-        width: 22px; height: 22px; border-radius: 50%;
+        color: white; width: 22px; height: 22px; border-radius: 50%;
         font-size: 10px; font-weight: bold;
         display: flex; align-items: center; justify-content: center;
         border: 2px solid #fff;
     }
-
-    /* Slide Styles */
-    .slick-prev:before, .slick-next:before { display: none; }
-    .thumb-item img { border: 2px solid transparent; opacity: 0.6; transition: 0.3s; }
-    .slick-current .thumb-item img { border-color: #000; opacity: 1; }
-    .btn-check:checked + .btn-outline-dark { background-color: #000; color: #fff; }
-    
-    /* Style cho Tab */
-    .nav-tabs .nav-link { border-radius: 0; border: none; }
-    .nav-tabs .nav-link.active { border-bottom: 3px solid #b24b4b !important; background: #f8f9fa !important; }
+    .btn-check:checked + .btn-outline-dark { background-color: #000 !important; color: #fff !important; }
+    .nav-tabs .nav-link { border: none; padding: 12px 25px; }
+    .nav-tabs .nav-link.active { border-bottom: 4px solid #000 !important; background: #f8f9fa !important; }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -190,13 +197,40 @@
 
 <script>
     $(document).ready(function(){
+        // Slider chạy mượt
         $('.product-main-slider').slick({
             slidesToShow: 1, arrows: false, fade: true, asNavFor: '.product-thumb-slider'
         });
         $('.product-thumb-slider').slick({
             slidesToShow: 4, asNavFor: '.product-main-slider', focusOnSelect: true,
-            prevArrow: '<button type="button" class="slick-prev" style="left:-15px"><i class="fas fa-chevron-left text-dark"></i></button>',
-            nextArrow: '<button type="button" class="slick-next" style="right:-15px"><i class="fas fa-chevron-right text-dark"></i></button>',
+            prevArrow: '<button type="button" class="slick-prev"><i class="fas fa-chevron-left text-dark"></i></button>',
+            nextArrow: '<button type="button" class="slick-next"><i class="fas fa-chevron-right text-dark"></i></button>',
+        });
+
+        // AJAX Thêm vào giỏ hàng (Không Alert)
+        $('#add-to-cart-form').on('submit', function(e) {
+            e.preventDefault(); 
+            var form = $(this);
+            $.ajax({
+                type: "POST",
+                url: form.attr('action'),
+                data: form.serialize(),
+                success: function(response) {
+                    // Cập nhật số lượng giỏ hàng trên Header ngay lập tức
+                    $('.cart-count, #cart-count').text(response.cart_count);
+                    
+                    // Hiệu ứng nhẹ: Rung icon giỏ hàng hoặc đổi màu nút để user biết đã click
+                    var btn = form.find('button[type="submit"]');
+                    var oldText = btn.text();
+                    btn.text('ĐÃ THÊM THÀNH CÔNG!').addClass('btn-success').removeClass('btn-dark');
+                    setTimeout(function() {
+                        btn.text(oldText).addClass('btn-dark').removeClass('btn-success');
+                    }, 2000);
+                },
+                error: function() {
+                    alert("Lỗi! Hãy chọn size trước.");
+                }
+            });
         });
     });
 </script>

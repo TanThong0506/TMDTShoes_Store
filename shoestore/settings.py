@@ -86,7 +86,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3307',
+        'PORT': '3306',
     }
 }
 
@@ -129,7 +129,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 # ... (các cấu hình static nếu có)
+# Đây là dòng cực kỳ quan trọng để Django "nhìn" thấy thư mục static mày mới tạo
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
+# Nơi gom file khi chạy lệnh collectstatic (để sửa lỗi mày vừa gặp)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # ==========================================
 # CẤU HÌNH THƯ MỤC LƯU ẢNH (MEDIA)
 # ==========================================
