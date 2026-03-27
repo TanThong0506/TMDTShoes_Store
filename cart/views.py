@@ -3,10 +3,12 @@ from django.http import JsonResponse
 from products.models import Product
 from django.contrib.humanize.templatetags.humanize import intcomma
 
-# Hàm phụ trợ tính toán lại toàn bộ giỏ hàng để dùng chung cho các hàm update/remove
+# Hàm phụ trợ xử lý cả 2 loại dữ liệu (int của web và dict của chatbot)
 def _get_cart_data(cart):
     total = 0
-    for item_key, quantity in cart.items():
+    for item_key, item_val in cart.items():
+        # Trích xuất đúng số lượng bất kể là int hay dict
+        quantity = item_val['quantity'] if isinstance(item_val, dict) else item_val
         try:
             p_id = item_key.split('_')[0]
             product = Product.objects.get(id=int(p_id))
@@ -19,7 +21,8 @@ def cart_detail(request):
     cart = request.session.get('cart', {})
     items = []
     total = 0
-    for item_key, quantity in cart.items():
+    for item_key, item_val in cart.items():
+        quantity = item_val['quantity'] if isinstance(item_val, dict) else item_val
         try:
             parts = item_key.split('_')
             p_id = parts[0]
@@ -48,10 +51,18 @@ def add_to_cart(request, product_id):
         size = request.POST.get('size', 'N/A')
         item_key = f"{product_id}_{size}"
         
-        cart[item_key] = cart.get(item_key, 0) + quantity
+        # Tương thích cộng dồn cho cả 2 kiểu dữ liệu
+        if item_key in cart:
+            if isinstance(cart[item_key], dict):
+                cart[item_key]['quantity'] += quantity
+            else:
+                cart[item_key] += quantity
+        else:
+            cart[item_key] = quantity
         
         request.session['cart'] = cart
-        new_count = sum(cart.values())
+        # Tính tổng số lượng hiển thị trên icon
+        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
         request.session['cart_count'] = new_count
         request.session.modified = True
         
@@ -63,22 +74,32 @@ def add_to_cart(request, product_id):
 def update_cart(request, item_key, action):
     cart = request.session.get('cart', {})
     item_total_html = "0"
+    current_qty = 0
     
     if item_key in cart:
+        is_dict = isinstance(cart[item_key], dict)
+        current_qty = cart[item_key]['quantity'] if is_dict else cart[item_key]
+        
         if action == 'increase':
-            cart[item_key] += 1
+            current_qty += 1
         elif action == 'decrease':
-            cart[item_key] -= 1
-            if cart[item_key] <= 0:
-                del cart[item_key]
+            current_qty -= 1
+            
+        if current_qty <= 0:
+            del cart[item_key]
+        else:
+            if is_dict:
+                cart[item_key]['quantity'] = current_qty
+            else:
+                cart[item_key] = current_qty
         
         if item_key in cart:
             p_id = item_key.split('_')[0]
             product = Product.objects.get(id=int(p_id))
-            item_total_html = intcomma(product.price * cart[item_key])
+            item_total_html = intcomma(product.price * current_qty)
 
     request.session['cart'] = cart
-    new_count = sum(cart.values())
+    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
     request.session['cart_count'] = new_count
     request.session.modified = True
     
@@ -87,7 +108,7 @@ def update_cart(request, item_key, action):
     return JsonResponse({
         'success': True, 
         'cart_count': new_count,
-        'item_count': cart.get(item_key, 0),
+        'item_count': current_qty if item_key in cart else 0,
         'item_total': item_total_html,
         'total_cart': intcomma(new_total_cart)
     })
@@ -98,7 +119,7 @@ def remove_from_cart(request, item_key):
         del cart[item_key]
         
     request.session['cart'] = cart
-    new_count = sum(cart.values())
+    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
     request.session['cart_count'] = new_count
     request.session.modified = True
     
@@ -110,7 +131,6 @@ def remove_from_cart(request, item_key):
         'total_cart': intcomma(new_total_cart)
     })
 
-# --- HÀM CHECKOUT ĐÃ ĐƯỢC SỬA LẠI CHUẨN ---
 def checkout(request):
     cart = request.session.get('cart', {})
     item_keys_str = request.GET.get('items', '')
@@ -122,26 +142,20 @@ def checkout(request):
     checkout_items = []
     total_price = 0
     
-    # Duyệt qua các key được chọn từ giao diện gửi lên
     for key in selected_keys:
         if key in cart:
             try:
-                # Tách ID sản phẩm và Size từ item_key (ví dụ: "1_39")
                 parts = key.split('_')
                 product_id = parts[0]
                 size = parts[1] if len(parts) > 1 else "N/A"
                 
-                # Lấy số lượng từ session
-                quantity = cart[key]
+                # Trích xuất số lượng an toàn
+                quantity = cart[key]['quantity'] if isinstance(cart[key], dict) else cart[key]
                 
-                # Truy vấn sản phẩm từ DB để lấy giá và tên
                 product = Product.objects.get(id=int(product_id))
-                
-                # Tính toán số tiền
                 item_total = product.price * quantity
                 total_price += item_total
                 
-                # Thêm vào danh sách hiển thị
                 checkout_items.append({
                     'item_key': key,
                     'product': product,
