@@ -45,7 +45,9 @@ urlpatterns = [
     
     # Kết nối tới App products
     path('products/', include('products.urls')), 
-    
+    # API xử lý Chatbot
+    path('api/get_response/', views.get_response, name='get_response'),
+    path('api/get_chat_history/', views.get_chat_history, name='get_chat_history'),
     # KẾT NỐI TỚI APP USERS 
     path('users/', include('users.urls')),
     
