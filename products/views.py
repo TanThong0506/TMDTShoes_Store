@@ -2,6 +2,11 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, F  # ĐÃ THÊM F: Dùng để so sánh 2 cột
 from .models import Product, Category, Brand, StorePolicy, Size
 
+# --- PHẦN THÊM MỚI (CHỈ THÊM) ---
+from django.contrib.auth.decorators import login_required
+from orders.models import Order 
+# ------------------------------
+
 def home(request):
     # Lọc chuẩn giày Sale (Chỉ lấy những giày có giá gốc lớn hơn giá bán hiện tại)
     sale_products = Product.objects.filter(old_price__gt=F('price'), is_active=True).order_by('?')[:10]
@@ -124,3 +129,19 @@ def sale_page(request):
         'current_sort': sort_by, 
     }
     return render(request, 'sale.html', context)
+
+# ==========================================
+# HÀM LỊCH SỬ ĐƠN HÀNG (CHỈ THÊM MỚI)
+# ==========================================
+@login_required
+def order_history(request):
+    """
+    Lấy danh sách đơn hàng của Nam để hiện vào menu dropdown Tài khoản
+    """
+    orders = Order.objects.filter(user=request.user).order_by('-id')
+    return render(request, 'order_history.html', {'orders': orders})
+@login_required
+def order_detail(request, order_id):
+    # Lấy đơn hàng đúng của người dùng đang đăng nhập, nếu không có trả về 404
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'order_detail_view.html', {'order': order})
