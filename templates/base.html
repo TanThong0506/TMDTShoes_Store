@@ -8,47 +8,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* --- ĐIỀU CHỈNH ƯU TIÊN HIỂN THỊ (FIX LỖI ĐÈ MENU) --- */
-        .navbar { 
-            z-index: 1070 !important; /* Luôn nằm trên cùng của trang */
-        }
-        
-        .dropdown-menu { 
-            z-index: 1080 !important; /* Menu con phải nằm cao hơn cả navbar */
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
-        }
-
-        /* --- LOGO & HIỆU ỨNG --- */
+        .navbar { z-index: 1070 !important; }
+        .dropdown-menu { z-index: 1080 !important; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
         .navbar-logo { transition: transform 0.3s ease; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); object-fit: contain; }
         .navbar-brand:hover .navbar-logo { transform: scale(1.1) rotate(5deg); }
         .navbar-logo-text { font-weight: 800; letter-spacing: -1px; text-transform: uppercase; }
-        
         .nav-link-custom { position: relative; }
-        .nav-link-custom::after { 
-            content: ''; position: absolute; width: 0; height: 2px; bottom: 5px; 
-            left: 50%; background-color: #fff; transition: all 0.3s ease; transform: translateX(-50%); 
-        }
+        .nav-link-custom::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 5px; left: 50%; background-color: #fff; transition: all 0.3s ease; transform: translateX(-50%); }
         .nav-link-custom:hover::after { width: 70%; }
-        
         .btn-sale-premium { transition: all 0.3s ease; border: 1px solid transparent; }
         .btn-sale-premium:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4) !important; color: #fff !important; }
-        
         .dropdown-item:hover { background-color: #f8f9fa; color: #000; }
-        
-        /* Tùy chỉnh thanh tìm kiếm */
         .placeholder-light::placeholder { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .badge-cart { position: absolute; top: -5px; right: -5px; font-size: 0.7rem; padding: 0.25em 0.45em; transition: transform 0.3s ease; display: inline-block; }
+
+        /* --- BONG BÓNG CHAT --- */
+        #chat-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #ffc107; color: #212529; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 9999; transition: transform 0.3s ease; }
+        #chat-bubble:hover { transform: scale(1.1); }
+        #chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 480px; background: #fff; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 9999; }
+        .widget-header { background: #212529; color: #fff; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .widget-header i.fa-times { cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+        .widget-header i.fa-times:hover { color: #ffc107; }
+        .widget-body { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; scroll-behavior: smooth; }
+        .msg-bubble { padding: 10px 15px; border-radius: 18px; max-width: 85%; line-height: 1.4; word-wrap: break-word; }
+        .msg-bot { background: #e9ecef; color: #212529; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg-user { background: #ffc107; color: #212529; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 500; }
+        .widget-footer { padding: 10px; background: #fff; border-top: 1px solid #ddd; display: flex; gap: 8px; }
+        .widget-footer input { flex: 1; border: 1px solid #ccc; border-radius: 20px; padding: 8px 15px; outline: none; }
+        .widget-footer input:focus { border-color: #ffc107; }
+        .widget-footer button { background: #212529; color: #ffc107; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        /* Hiệu ứng badge giỏ hàng */
-        .badge-cart {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            font-size: 0.7rem;
-            padding: 0.25em 0.45em;
-        }
+        /* Nút chọn Size & Hủy */
+        .btn-size { background-color: #fff; border: 1px solid #198754; color: #198754; padding: 6px 14px; border-radius: 20px; margin: 4px 4px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.2s; }
+        .btn-size:hover { background-color: #198754; color: #fff; }
+        .btn-cancel { background-color: #fff; border: 1px solid #dc3545; color: #dc3545; padding: 6px 14px; border-radius: 20px; margin: 4px 0 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.2s; }
+        .btn-cancel:hover { background-color: #dc3545; color: #fff; }
+        .options-box { margin-top: 12px; display: flex; flex-wrap: wrap; border-top: 1px dashed #ccc; padding-top: 10px; }
+        
+        /* Chỉnh CSS hình ảnh Chatbot mượt hơn */
+        .chat-img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="bg-light"> 
@@ -59,23 +57,15 @@
             <img src="{% static 'images/logo.png' %}" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo">
             <span class="navbar-logo-text text-white">SHOE<span class="text-warning">STORE</span></span>
         </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"><span class="navbar-toggler-icon"></span></button>
 
         <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto align-items-center gap-1 mt-3 mt-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="{% url 'home' %}">Trang chủ</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white fw-semibold px-3" href="{% url 'products:product_list' %}">Sản phẩm</a>
-                </li>
+                <li class="nav-item"><a class="nav-link nav-link-custom text-white fw-semibold text-uppercase px-3" style="font-size: 0.9rem;" href="{% url 'home' %}">Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link text-white fw-semibold px-3" href="{% url 'products:product_list' %}">Sản phẩm</a></li>
                 <li class="nav-item mx-lg-3 my-2 my-lg-0">
                     <a class="nav-link btn-sale-premium bg-danger text-white rounded-pill px-4 py-2 d-flex align-items-center" href="{% url 'sale' %}">
-                        <i class="fas fa-fire text-warning me-2"></i> 
-                        <span class="fw-bold text-uppercase" style="font-size: 0.85rem;">Khuyến Mãi</span>
+                        <i class="fas fa-fire text-warning me-2"></i> <span class="fw-bold text-uppercase" style="font-size: 0.85rem;">Khuyến Mãi</span>
                     </a>
                 </li>
             </ul>
@@ -92,29 +82,17 @@
                     <a class="nav-link text-white fw-semibold px-2 position-relative" href="{% url 'cart:cart_detail' %}">
                         <i class="fas fa-shopping-cart fs-5 me-1"></i> Giỏ hàng
                         <span id="cart-count" class="badge rounded-pill bg-warning text-dark badge-cart">
-                            {% if request.session.cart %}
-                                {% if request.session.cart_count %}
-                                    {{ request.session.cart_count }}
-                                {% else %}
-                                    {# Backup nếu chưa kịp cập nhật cart_count thì tự đếm #}
-                                    {{ request.session.cart|length }}
-                                {% endif %}
-                            {% else %}
-                                0
-                            {% endif %}
+                            {% if request.session.cart %}{% if request.session.cart_count %}{{ request.session.cart_count }}{% else %}{{ request.session.cart|length }}{% endif %}{% else %}0{% endif %}
                         </span>
                     </a>
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle btn btn-outline-warning rounded-pill px-4 fw-bold text-white shadow-none" 
-                           href="#" id="accountMenu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle btn btn-outline-warning rounded-pill px-4 fw-bold text-white shadow-none" href="#" id="accountMenu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-user-circle me-1"></i> Tài khoản
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" aria-labelledby="accountMenu">
-                            <li class="px-3 py-2 fw-bold text-dark border-bottom mb-2" style="font-size: 0.9rem;">
-                                <i class="fas fa-smile text-warning me-2"></i>Xin chào, {{ user.username }}
-                            </li>
+                            <li class="px-3 py-2 fw-bold text-dark border-bottom mb-2" style="font-size: 0.9rem;"><i class="fas fa-smile text-warning me-2"></i>Xin chào, {{ user.username }}</li>
                             <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="fas fa-id-card me-2 text-primary"></i> Thông tin cá nhân</a></li>
                             <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="fas fa-history me-2 text-success"></i> Lịch sử đơn hàng</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -122,9 +100,7 @@
                         </ul>
                     </li>
                 {% else %}
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light rounded-pill px-4 fw-bold" href="{% url 'login' %}">Đăng nhập</a>
-                    </li>
+                    <li class="nav-item"><a class="btn btn-outline-light rounded-pill px-4 fw-bold" href="{% url 'login' %}">Đăng nhập</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -136,11 +112,164 @@
 </div>
 
 <footer class="text-center py-4 border-top mt-5 bg-white">
-    <div class="container">
-        <p class="mb-0 text-muted fw-semibold">© 2026 Shoe Store - Nâng bước thành công</p>
-    </div>
+    <div class="container"><p class="mb-0 text-muted fw-semibold">© 2026 Shoe Store - Nâng bước thành công</p></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="chat-bubble" onclick="toggleWidget()"><i class="fas fa-comment-dots"></i></div>
+
+<div id="chat-widget">
+    <div class="widget-header">
+        <span><i class="fas fa-robot text-warning me-2"></i> Trợ lý Shoe Store</span>
+        <i class="fas fa-times" onclick="toggleWidget()"></i>
+    </div>
+    <div class="widget-body" id="widget-body">
+        <div class="msg-bubble msg-bot">Dạ Shoe Store xin chào! Bạn cần tìm mẫu giày nào hay tư vấn size cứ nhắn mình nhé 👟</div>
+    </div>
+    <div class="widget-footer">
+        <input type="text" id="widget-input" placeholder="Nhập tin nhắn..." onkeypress="handleWidgetEnter(event)">
+        <button onclick="sendWidgetMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+    const widgetWindow = document.getElementById('chat-widget');
+    const widgetBody = document.getElementById('widget-body');
+    const widgetInput = document.getElementById('widget-input');
+
+    function toggleWidget() {
+        widgetWindow.style.display = (widgetWindow.style.display === 'none' || widgetWindow.style.display === '') ? 'flex' : 'none';
+        if(widgetWindow.style.display === 'flex') {
+            widgetBody.scrollTop = widgetBody.scrollHeight;
+        }
+    }
+
+    window.onload = function() {
+        fetch('/api/get_chat_history/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.history && data.history.length > 0) {
+                widgetBody.innerHTML = ''; 
+                data.history.forEach(item => {
+                    let className = item.is_bot ? 'msg-bot' : 'msg-user';
+                    
+                    // Ẩn đi các mã kỹ thuật nếu còn dính trong lịch sử
+                    let cleanedText = item.message.replace(/\[CHOOSE_SIZE:.*?\]/g, '').replace(/\[ADD_CART:.*?\]/g, '');
+                    
+                    // Render hình ảnh từ lịch sử chat
+                    cleanedText = cleanedText.replace(/\[SHOW_IMAGE:\s*([^\]]+)\]/g, '<br><img src="$1" class="chat-img"><br>');
+                    
+                    let formattedText = cleanedText.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    widgetBody.innerHTML += `<div class="msg-bubble ${className}">${formattedText}</div>`;
+                });
+                
+                // Timeout nhẹ để đảm bảo ảnh load xong mới cuộn xuống đáy
+                setTimeout(() => {
+                    widgetBody.scrollTop = widgetBody.scrollHeight;
+                }, 150);
+            }
+        });
+    }
+
+    function handleWidgetEnter(e) { if (e.key === 'Enter') sendWidgetMessage(); }
+
+    function sendWidgetMessage() {
+        const text = widgetInput.value.trim();
+        if (!text) return;
+        widgetInput.value = '';
+        processChatApi(text, text);
+    }
+
+    // Xóa/Ẩn nút Size sau khi đã bấm để tránh bấm nhiều lần
+    function removeOptionsBox(btnElement) {
+        if(btnElement && btnElement.closest('.options-box')) {
+            btnElement.closest('.options-box').style.display = 'none';
+        }
+    }
+
+    // Khi bấm Chọn Size
+    function submitOrder(productId, size, btnElement) {
+        removeOptionsBox(btnElement);
+        const hiddenMessage = `Xác nhận đặt mua mã ${productId} size ${size}`;
+        const displayMessage = `Mình chọn size ${size}`;
+        processChatApi(hiddenMessage, displayMessage);
+    }
+
+    // Khi bấm Hủy
+    function cancelOrder(btnElement) {
+        removeOptionsBox(btnElement);
+        widgetBody.innerHTML += `<div class="msg-bubble msg-user">Mình không thêm nữa.</div>`;
+        widgetBody.innerHTML += `<div class="msg-bubble msg-bot">Dạ vâng ạ, thao tác đã được hủy. Bạn cần xem mẫu nào khác cứ bảo mình nha! 🥰</div>`;
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+    }
+
+    function processChatApi(apiText, displayText) {
+        widgetBody.innerHTML += `<div class="msg-bubble msg-user">${displayText}</div>`;
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+
+        const typingId = "typing-" + Date.now();
+        widgetBody.innerHTML += `<div id="${typingId}" class="msg-bubble msg-bot"><i>Đang suy nghĩ...</i></div>`;
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+
+        fetch('/api/get_response/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: apiText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById(typingId).remove(); 
+            if (data.response) {
+                let aiText = data.response;
+                let actionHtml = '';
+                
+                // Mật lệnh 1: Nút SIZE
+                const sizeRegex = /\[CHOOSE_SIZE:\s*(\d+)\s*:\s*([^\]]+)\]/;
+                const match = aiText.match(sizeRegex);
+                
+                if (match) {
+                    const productId = match[1];
+                    const sizes = match[2].split(',').map(s => s.trim());
+                    aiText = aiText.replace(sizeRegex, ''); 
+                    
+                    actionHtml += '<div class="options-box"><div style="width:100%; margin-bottom:5px; font-weight:bold; font-size:0.9rem;">Chọn size muốn thêm vào giỏ:</div>';
+                    sizes.forEach(size => {
+                        actionHtml += `<button class="btn-size" onclick="submitOrder('${productId}', '${size}', this)">Size ${size}</button>`;
+                    });
+                    actionHtml += `<button class="btn-cancel" onclick="cancelOrder(this)">Hủy</button></div>`;
+                }
+
+                // Mật lệnh 2: Render Hình Ảnh Sản phẩm
+                aiText = aiText.replace(/\[SHOW_IMAGE:\s*([^\]]+)\]/g, '<br><img src="$1" class="chat-img" onload="document.getElementById(\'widget-body\').scrollTop = document.getElementById(\'widget-body\').scrollHeight;"><br>');
+
+                let formattedText = aiText.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                widgetBody.innerHTML += `<div class="msg-bubble msg-bot">${formattedText}${actionHtml}</div>`;
+                
+                // Cập nhật số lượng giỏ hàng trên Menu
+                if (data.cart_count !== undefined) {
+                    const cartBadge = document.getElementById('cart-count');
+                    if(cartBadge) {
+                        cartBadge.innerText = data.cart_count;
+                        cartBadge.style.transform = 'scale(1.5)';
+                        setTimeout(() => cartBadge.style.transform = 'scale(1)', 300);
+                    }
+                }
+                
+                // Cuộn xuống cuối sau khi thêm bubble
+                widgetBody.scrollTop = widgetBody.scrollHeight;
+            } else {
+                widgetBody.innerHTML += `<div class="msg-bubble msg-bot text-danger">⚠️ Lỗi: ${data.error}</div>`;
+            }
+            widgetBody.scrollTop = widgetBody.scrollHeight;
+        })
+        .catch(error => {
+            const typingEl = document.getElementById(typingId);
+            if (typingEl) typingEl.remove();
+            widgetBody.innerHTML += `<div class="msg-bubble msg-bot text-danger">⚠️ Lỗi mạng, vui lòng thử lại!</div>`;
+            widgetBody.scrollTop = widgetBody.scrollHeight;
+        });
+    }
+</script>
 </body>
 </html>
