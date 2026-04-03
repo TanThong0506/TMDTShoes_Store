@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Trợ lý AI - Shoe Store</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .chat-container { max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.15); display: flex; flex-direction: column; height: 85vh; overflow: hidden; }
+        .chat-header { background: #212529; color: #fff; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; }
+        .chat-header a { color: #ffc107; text-decoration: none; font-size: 0.9rem; float: left; margin-top: 4px; }
+        .chat-box { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: #fafafa; }
+        .message { padding: 12px 18px; border-radius: 15px; max-width: 80%; line-height: 1.5; }
+        .user-message { background: #ffc107; color: #000; align-self: flex-end; border-bottom-right-radius: 0; font-weight: 500; }
+        .bot-message { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 0; }
+        .chat-input { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
+        .chat-input input { flex-grow: 1; padding: 12px 20px; border: 2px solid #eee; border-radius: 25px; outline: none; transition: 0.3s; }
+        .chat-input input:focus { border-color: #ffc107; }
+        .chat-input button { margin-left: 10px; padding: 10px 20px; background: #212529; color: #ffc107; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .chat-input button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <a href="/">❮ Về trang chủ</a>
+            Trợ lý AI Shoe Store 👟
+        </div>
+        <div class="chat-box" id="chat-box">
+            <div class="message bot-message">Chào bạn, mình là trợ lý AI của Shoe Store. Bạn cần tư vấn mẫu giày nào, hay muốn hỏi về size và giá cả cứ nhắn mình nhé! 🔥</div>
+        </div>
+        <form class="chat-input" id="chat-form">
+            <input type="text" id="user-input" placeholder="Hỏi về size, giá cả, mẫu giày..." autocomplete="off">
+            <button type="submit">Gửi</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userInput = document.getElementById('user-input');
+            const userMessage = userInput.value.trim();
+            if (userMessage === '') return;
+
+            // 1. Hiển thị tin nhắn người dùng
+            addMessageToChatbox(userMessage, 'user-message');
+            userInput.value = '';
+
+            // 2. Hiện hiệu ứng AI đang gõ
+            const typingId = "typing-" + Date.now();
+            addMessageToChatbox('<i>Đang suy nghĩ...</i>', 'bot-message', typingId);
+
+            // 3. Gửi lên backend (Hàm get_response trong views.py)
+            fetch('/api/get_response/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Xóa dòng "Đang suy nghĩ..."
+                document.getElementById(typingId).remove();
+                
+                if (data.response) {
+                    addMessageToChatbox(data.response, 'bot-message');
+                } else if (data.error) {
+                    addMessageToChatbox('⚠️ Lỗi: ' + data.error, 'bot-message');
+                }
+            })
+            .catch(error => {
+                document.getElementById(typingId).remove();
+                console.error('Error:', error);
+                addMessageToChatbox('⚠️ Lỗi kết nối. Vui lòng thử lại!', 'bot-message');
+            });
+        });
+
+        function addMessageToChatbox(message, className, id = null) {
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + className;
+            
+            // Format xuống dòng cho dễ đọc
+            messageDiv.innerHTML = message.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            
+            if (id) messageDiv.id = id;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
