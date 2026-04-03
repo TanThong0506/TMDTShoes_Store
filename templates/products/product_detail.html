@@ -48,7 +48,8 @@
                 {% endif %}
             </div>
 
-            <form method="POST"> {% csrf_token %}
+            <form method="POST" action="{% url 'cart:add_to_cart' %}"> {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}" />
                 <div class="mb-4">
                     <p class="fw-bold mb-2">Kích thước (Size): <a href="#" class="text-muted small fw-normal ms-2 text-decoration-underline">Hướng dẫn chọn size</a></p>
                     <div class="d-flex flex-wrap gap-2">

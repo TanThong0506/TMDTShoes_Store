@@ -47,7 +47,10 @@ urlpatterns = [
     path('products/', include('products.urls')), 
     
     # KẾT NỐI TỚI APP USERS 
-    path('users/', include('users.urls'))
+    path('users/', include('users.urls')),
+
+    # KẾT NỐI TỚI APP CART 
+    path('cart/', include('cart.urls')),
 ]
 
 if settings.DEBUG:
