@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'cart',
     'orders',
     'users',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -86,7 +87,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3306',
+        'PORT': '3307',
     }
 }
 
@@ -223,3 +224,9 @@ USE_L10N = False
 USE_THOUSAND_SEPARATOR = True
 THOUSAND_SEPARATOR = ','
 NUMBER_GROUPING = 3
+
+# Django REST Framework basic settings
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
