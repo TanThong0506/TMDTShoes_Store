@@ -1,13 +1,16 @@
 from django.urls import path
 from . import views
+from . import api
 
 urlpatterns = [
-    # Đường dẫn này kết hợp với 'users/' ở trên sẽ tạo thành 'users/login/'
+    # Web views (keep for templates)
     path('login/', views.login_view, name='login'),
-    
-    # THÊM DÒNG NÀY VÀO
     path('register/', views.register_view, name='register'),
-    
-    # THÊM TIẾP DÒNG NÀY VÀO ĐỂ SỬA LỖI ĐĂNG XUẤT NHÉ
     path('logout/', views.logout_view, name='logout'),
+
+    # API endpoints
+    path('api/register/', api.RegisterAPIView.as_view(), name='api_register'),
+    path('api/logout/', api.LogoutAPIView.as_view(), name='api_logout'),
+    path('api/token/', api.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', api.TokenRefreshView.as_view(), name='token_refresh'),
 ]

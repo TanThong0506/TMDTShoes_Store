@@ -82,3 +82,29 @@ class StorePolicyTests(TestCase):
     def test_storepolicy_str(self):
         sp = StorePolicy.objects.create(title='Policy', payment_policy='Pay', return_policy='Return')
         self.assertEqual(str(sp), 'Policy')
+
+
+class ProductCrudModelTests(TestCase):
+    def setUp(self):
+        self.brand = Brand.objects.create(name='BrandX')
+        self.cat = Category.objects.create(name='Casual')
+        self.size = Size.objects.create(value='40')
+
+    def test_create_update_delete_product(self):
+        img = SimpleUploadedFile('p.jpg', b'img', content_type='image/jpeg')
+        p = Product.objects.create(name='CRUD Shoe', brand=self.brand, price=500, image=img, stock=3)
+        p.category.add(self.cat)
+        p.sizes.add(self.size)
+
+        # Verify create
+        self.assertTrue(Product.objects.filter(name='CRUD Shoe').exists())
+
+        # Update
+        p.price = 450
+        p.save()
+        p2 = Product.objects.get(name='CRUD Shoe')
+        self.assertEqual(p2.price, 450)
+
+        # Delete
+        p.delete()
+        self.assertFalse(Product.objects.filter(name='CRUD Shoe').exists())

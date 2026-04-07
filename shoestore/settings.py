@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
+# Load environment variables from .env (BASE_DIR/.env)
+load_dotenv(BASE_DIR / '.env')
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&@u3tm4l3n7)v#((is^5!=fbghcbv6+79)(9fy_x-y(og*dgjz'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+# Hosts
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -44,11 +50,13 @@ INSTALLED_APPS = [
     'orders',
     'users',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -67,6 +75,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -110,6 +119,38 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Use bcrypt as primary hasher (bcrypt rounds configurable via .env)
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+]
+
+# Bcrypt rounds (cost factor). Ensure >= 10 for security and performance.
+try:
+    BCRYPT_ROUNDS = int(os.getenv('BCRYPT_ROUNDS', '12'))
+except ValueError:
+    BCRYPT_ROUNDS = 12
+
+# REST framework defaults: read-only for anonymous, authenticated for writes
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+}
+
+# Simple JWT token settings (lifetimes in days via .env, defaults to 7 days)
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(os.getenv('ACCESS_TOKEN_DAYS', '7'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('REFRESH_TOKEN_DAYS', '7'))),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+}
+
+# Security for HTTPS deployment (set SECURE_SSL_REDIRECT=True in production .env)
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('1', 'true', 'yes')
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() in ('1', 'true', 'yes')
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False').lower() in ('1', 'true', 'yes')
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -121,6 +162,17 @@ TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Sẵn tiện đổi luôn múi giờ về Vi�
 
 USE_I18N = True
 USE_TZ = True
+
+# Force available languages (only Vietnamese for admin/UI)
+LANGUAGES = [
+    ('vi', 'Tiếng Việt'),
+    ('en', 'English'),
+]
+
+# Locales directory for custom translations (use `makemessages`/`compilemessages`)
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -156,11 +208,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 JAZZMIN_SETTINGS = {
     # 1. Thông tin chung
-    "site_title": "Shoe Store Admin",
-    "site_header": "Shoe Store",
-    "site_brand": "SHOE STORE",
-    "welcome_sign": "Hệ thống Quản trị Shoe Store 👟",
-    "copyright": "Shoe Store © 2026",
+    "site_title": "Quản trị Cửa hàng Giày",
+    "site_header": "Cửa hàng Giày",
+    "site_brand": "CỬA HÀNG GIÀY",
+    "welcome_sign": "Chào mừng đến hệ thống quản trị Cửa hàng Giày 👟",
+    "copyright": "Cửa hàng Giày © 2026",
 
     # 2. Thanh Menu Top (Thêm nút bấm nhanh)
     "topmenu_links": [

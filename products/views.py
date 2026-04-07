@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, F  # ĐÃ THÊM F: Dùng để so sánh 2 cột
-from .models import Product, Category, Brand, StorePolicy, Size
+from .models import Product, Category, Brand, StorePolicy, Size, Sale
+from django.utils import timezone
 
 def home(request):
     # Lọc chuẩn giày Sale (Chỉ lấy những giày có giá gốc lớn hơn giá bán hiện tại)
@@ -60,10 +61,25 @@ def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     # Lấy chính sách chung
     policy = StorePolicy.objects.first() 
-    
+    # Sản phẩm đề cử: ưu tiên cùng category, loại trừ product hiện tại
+    recommended = Product.objects.filter(category__in=product.category.all(), is_active=True).exclude(pk=product.pk).distinct()
+    # Nếu không đủ, thêm theo brand
+    if recommended.count() < 6:
+        more = Product.objects.filter(brand=product.brand, is_active=True).exclude(pk=product.pk).distinct()
+        # Kết hợp và loại trùng
+        recommended = (recommended | more).distinct()
+
+    # Fallback: nếu vẫn ít, lấy sản phẩm mới nhất
+    if recommended.count() < 6:
+        fallback = Product.objects.filter(is_active=True).exclude(pk=product.pk).order_by('-id')
+        recommended = (recommended | fallback).distinct()
+
+    recommended = recommended.order_by('?')[:8]
+
     context = {
         'product': product,
         'policy': policy,
+        'recommended_products': recommended,
     }
     return render(request, 'products/product_detail.html', context)
 
@@ -99,8 +115,14 @@ def search_products(request):
 # HÀM TRANG KHUYẾN MÃI (ĐÃ THÊM VALIDATION)
 # ==========================================
 def sale_page(request):
-    # 1. Lọc ra các sản phẩm ĐANG GIẢM GIÁ (có giá cũ lớn hơn giá hiện tại)
-    sale_items = Product.objects.filter(is_active=True, old_price__gt=F('price'))
+    now = timezone.now()
+    # 1. Nếu có chương trình Sale đang active (theo ngày) thì lấy các sản phẩm đó
+    active_sale = Sale.objects.filter(active=True, start_date__lte=now, end_date__gte=now).order_by('-start_date').first()
+    if active_sale:
+        sale_items = active_sale.products.filter(is_active=True).distinct()
+    else:
+        # Fallback: Lọc ra các sản phẩm ĐANG GIẢM GIÁ (có giá cũ lớn hơn giá hiện tại)
+        sale_items = Product.objects.filter(is_active=True, old_price__gt=F('price'))
     
     # 2. BẮT ĐẦU XỬ LÝ SẮP XẾP TỪ URL
     # VALIDATION: Loại bỏ khoảng trắng thừa (nếu có)
@@ -122,5 +144,6 @@ def sale_page(request):
     context = {
         'sale_items': sale_items,
         'current_sort': sort_by, 
+        'active_sale': active_sale,
     }
     return render(request, 'sale.html', context)
