@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from .models import Order, OrderItem
 from products.models import Product 
 from cart.models import Cart, CartItem 
@@ -39,12 +41,13 @@ def checkout(request):
     }
     return render(request, 'checkout.html', context)
 
+@login_required
 def order_create(request):
     if request.method == 'POST':
-        full_name = request.POST.get('full_name')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
-        payment_method = request.POST.get('payment_method')
+        full_name = (request.POST.get('full_name') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        address = (request.POST.get('address') or '').strip()
+        payment_method = (request.POST.get('payment_method') or '').strip()
         
         # Lấy items từ query string của action URL trong form
         item_keys_str = request.GET.get('items', '')
@@ -53,6 +56,19 @@ def order_create(request):
         if not item_keys_str:
             messages.error(request, "Giỏ hàng của bạn đang trống.")
             return redirect('cart:cart_detail')
+
+        # Basic input validation
+        if not full_name or not address or not phone:
+            messages.error(request, 'Vui lòng cung cấp đầy đủ thông tin giao hàng.')
+            return redirect('orders:checkout')
+
+        if len(full_name) > 200 or len(address) > 1000:
+            messages.error(request, 'Thông tin quá dài, vui lòng kiểm tra lại.')
+            return redirect('orders:checkout')
+
+        if not phone.isdigit() or len(phone) < 6:
+            messages.error(request, 'Số điện thoại không hợp lệ.')
+            return redirect('orders:checkout')
 
         # 1. Tạo đơn hàng
         order = Order.objects.create(

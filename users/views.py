@@ -3,24 +3,53 @@ from django.contrib.auth.models import User
 # BƯỚC 1: Mình đã thêm chữ 'logout' vào dòng import này
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
 
 
 # HÀM XỬ LÝ ĐĂNG KÝ
 def register_view(request):
     if request.method == 'POST':
         # 1. Lấy dữ liệu người dùng nhập từ form HTML
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
+        username = (request.POST.get('username') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        password = request.POST.get('password') or ''
+        confirm_password = request.POST.get('confirm_password') or ''
 
         # 2. Kiểm tra dữ liệu
+        if not username:
+            messages.error(request, 'Tên đăng nhập không được để trống!')
+            return redirect('register')
+
+        if not email:
+            messages.error(request, 'Email không được để trống!')
+            return redirect('register')
+
+        # validate email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, 'Email không hợp lệ!')
+            return redirect('register')
+
         if password != confirm_password:
             messages.error(request, 'Mật khẩu xác nhận không khớp!')
             return redirect('register')
-        
+
+        # validate password strength using Django validators
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            messages.error(request, ' '.join(e.messages))
+            return redirect('register')
+
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Tên đăng nhập đã tồn tại!')
+            return redirect('register')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email này đã được sử dụng!')
             return redirect('register')
 
         # 3. Tạo tài khoản và lưu vào Database
@@ -38,8 +67,12 @@ def register_view(request):
 def login_view(request):
     if request.method == 'POST':
         # 1. Lấy dữ liệu từ form
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = (request.POST.get('username') or '').strip()
+        password = request.POST.get('password') or ''
+
+        if not username or not password:
+            messages.error(request, 'Vui lòng nhập cả tên đăng nhập và mật khẩu.')
+            return render(request, 'login.html')
 
         # 2. Kiểm tra xem tài khoản có đúng không
         user = authenticate(request, username=username, password=password)

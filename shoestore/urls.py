@@ -52,6 +52,10 @@ urlpatterns = [
     path('users/', include('users.urls')),
     
     path('cart/', include('cart.urls')), # <--- Thêm dòng này vào đây
+    # API endpoints for cart (REST-like)
+    path('api/cart/', include('cart.api_urls')),
+    # Central API router (DRF)
+    path('api/', include('shoestore.api_urls')),
     path('orders/', include('orders.urls', namespace='orders')),
 ]
 

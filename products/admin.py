@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms  # <-- Bắt buộc phải import forms
 from .models import Product, ProductImage, Size, Category, Brand, Review, StorePolicy
+from .models import Sale
 
 # --- 1. TẠO FORM ẢO CHO ADMIN ĐỂ THÊM Ô % GIẢM GIÁ ---
 class ProductAdminForm(forms.ModelForm):
@@ -75,3 +76,9 @@ admin.site.register(Size)
 admin.site.register(Category)
 admin.site.register(Brand)
 admin.site.register(Review)
+@admin.register(Sale)
+class SaleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'start_date', 'end_date', 'active')
+    list_filter = ('active',)
+    filter_horizontal = ('products',)
+    search_fields = ('title',)

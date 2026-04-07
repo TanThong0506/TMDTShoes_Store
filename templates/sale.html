@@ -13,8 +13,8 @@
             <span class="badge bg-white text-danger px-3 py-2 rounded-pill mb-3 fw-bold fs-6">
                 <i class="fas fa-bolt"></i> CHỈ DIỄN RA TRONG TUẦN NÀY
             </span>
-            <h1 class="display-3 fw-bold mb-2" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">FLASH SALE <br> END OF SEASON</h1>
-            <p class="fs-4 opacity-75 mb-0">Giảm giá chạm đáy. Số lượng có hạn!</p>
+            <h1 class="display-3 fw-bold mb-2" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">{% if active_sale %}{{ active_sale.title }}{% else %}FLASH SALE <br> END OF SEASON{% endif %}</h1>
+            <p class="fs-4 opacity-75 mb-0">{% if active_sale %}Giảm giá từ {{ active_sale.start_date|date:"d/m/Y H:i" }} đến {{ active_sale.end_date|date:"d/m/Y H:i" }}{% else %}Giảm giá chạm đáy. Số lượng có hạn!{% endif %}</p>
         </div>
         
         <div class="col-md-5">
@@ -147,8 +147,12 @@
 </style>
 
 <script>
-    // Thiết lập đếm ngược giả lập: Luôn còn 3 ngày tính từ lúc khách vào web
+    // Nếu backend cung cấp active_sale thì dùng end_date làm đích; ngược lại dùng đếm ngược mẫu
+    {% if active_sale %}
+    let countDownDate = new Date("{{ active_sale.end_date|date:'c' }}").getTime();
+    {% else %}
     let countDownDate = new Date().getTime() + (3 * 24 * 60 * 60 * 1000) + (12 * 60 * 60 * 1000) + (45 * 60 * 1000);
+    {% endif %}
 
     let x = setInterval(function() {
         let now = new Date().getTime();

@@ -1,4 +1,6 @@
 __pycache__/
-*.pyc__pycache__/ 
-*.pyc 
-db.sqlite3 
+*.pyc
+venv/
+.env
+db.sqlite3
+.vscode/

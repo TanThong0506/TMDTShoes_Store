@@ -114,3 +114,26 @@ Thong
 Project: TMDT Shoes Store
 
 Backend: Django + MySQL
+
+🤖 Hướng dẫn Chat Bot
+
+Chat bot được tích hợp trong website TMDT Shoes Store để hỗ trợ khách hàng.
+
+🔹 Tính năng chính:
+- Tư vấn sản phẩm giày dép
+- Hỗ trợ đặt hàng
+- Trả lời câu hỏi thường gặp
+- Gợi ý sản phẩm dựa trên sở thích
+
+🔹 Cách sử dụng:
+1. Truy cập website: http://localhost:8000
+2. Nhấp vào biểu tượng chat bot ở góc phải màn hình
+3. Bắt đầu trò chuyện bằng cách chào hỏi hoặc hỏi về sản phẩm
+4. Chat bot sẽ trả lời tự động và có thể chuyển tiếp cho nhân viên nếu cần
+
+🔹 Lưu ý:
+- Chat bot hoạt động 24/7
+- Đối với vấn đề phức tạp, chat bot sẽ chuyển tiếp cho đội ngũ hỗ trợ
+- Đảm bảo kết nối internet ổn định để chat mượt mà
+
+📞 Liên hệ hỗ trợ: thong@example.com

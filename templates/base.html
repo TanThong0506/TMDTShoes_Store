@@ -11,6 +11,8 @@
         .navbar { z-index: 1070 !important; }
         .dropdown-menu { z-index: 1080 !important; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
         .navbar-logo { transition: transform 0.3s ease; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); object-fit: contain; }
+            .navbar { z-index: 11000 !important; }
+            .dropdown-menu { z-index: 11010 !important; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
         .navbar-brand:hover .navbar-logo { transform: scale(1.1) rotate(5deg); }
         .navbar-logo-text { font-weight: 800; letter-spacing: -1px; text-transform: uppercase; }
         .nav-link-custom { position: relative; }
@@ -26,6 +28,8 @@
         #chat-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #ffc107; color: #212529; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 9999; transition: transform 0.3s ease; }
         #chat-bubble:hover { transform: scale(1.1); }
         #chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 480px; background: #fff; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 9999; }
+            #chat-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #ffc107; color: #212529; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; transition: transform 0.3s ease; }
+            #chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 480px; background: #fff; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 1000; }
         .widget-header { background: #212529; color: #fff; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .widget-header i.fa-times { cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
         .widget-header i.fa-times:hover { color: #ffc107; }
@@ -54,8 +58,8 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-            <img src="{% static 'images/logo.png' %}" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo">
-            <span class="navbar-logo-text text-white">SHOE<span class="text-warning">STORE</span></span>
+            <img src="{% static 'images/logo.svg' %}" alt="Logo" width="45" height="45" class="d-inline-block align-text-top me-2 navbar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+            <span class="navbar-logo-text text-white" style="display:none">SHOE<span class="text-warning">STORE</span></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"><span class="navbar-toggler-icon"></span></button>
 
@@ -111,9 +115,73 @@
     {% block content %} {% endblock %}
 </div>
 
-<footer class="text-center py-4 border-top mt-5 bg-white">
-    <div class="container"><p class="mb-0 text-muted fw-semibold">© 2026 Shoe Store - Nâng bước thành công</p></div>
+<footer class="bg-dark text-light pt-5 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5 class="fw-bold">Shoe Store</h5>
+                <p class="small text-muted">Cửa hàng giày chính hãng, giao hàng toàn quốc.</p>
+                <p class="small mb-0">Hotline: <a href="tel:0123456789" class="text-warning">0123 456 789</a></p>
+                <p class="small">Địa chỉ: 123 Đường Giày, Quận Chân, TP. Hồ Chí Minh</p>
+            </div>
+            <div class="col-md-2 mb-4">
+                <h6 class="fw-bold">Danh mục</h6>
+                <ul class="list-unstyled small">
+                    <li><a class="text-light text-decoration-none" href="{% url 'products:product_list' %}">Sản phẩm</a></li>
+                    <li><a class="text-light text-decoration-none" href="{% url 'sale' %}">Khuyến mãi</a></li>
+                    <li><a class="text-light text-decoration-none" href="{% url 'help' %}">Trợ giúp</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 mb-4">
+                <h6 class="fw-bold">Hỗ trợ</h6>
+                <ul class="list-unstyled small">
+                    <li><a class="text-light text-decoration-none" href="#">Liên hệ</a></li>
+                    <li><a class="text-light text-decoration-none" href="#">Chính sách đổi trả</a></li>
+                    <li><a class="text-light text-decoration-none" href="#">Chính sách bảo hành</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 mb-4">
+                <h6 class="fw-bold">Đăng ký nhận tin</h6>
+                <form id="footer-newsletter" class="d-flex mt-2">
+                    <input type="email" class="form-control form-control-sm me-2" placeholder="Email của bạn" aria-label="Email" required>
+                    <button class="btn btn-warning btn-sm" type="submit">Đăng ký</button>
+                </form>
+                <div class="mt-3">
+                    <a href="#" class="text-light me-2"><i class="fab fa-facebook fa-lg"></i></a>
+                    <a href="#" class="text-light me-2"><i class="fab fa-instagram fa-lg"></i></a>
+                    <a href="#" class="text-light"><i class="fab fa-youtube fa-lg"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row border-top pt-3">
+            <div class="col-md-8">
+                <p class="small text-muted mb-0">© 2026 Shoe Store. All rights reserved.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="#" id="back-to-top" class="btn btn-outline-light btn-sm">Lên đầu trang</a>
+            </div>
+        </div>
+    </div>
 </footer>
+
+<!-- Footer scripts: newsletter (no backend) and back-to-top -->
+<script>
+    document.getElementById('footer-newsletter').addEventListener('submit', function(e){
+        e.preventDefault();
+        // Simple UX feedback. Hook this to backend endpoint if available.
+        const btn = this.querySelector('button');
+        const old = btn.innerText;
+        btn.innerText = 'Đã đăng ký';
+        btn.disabled = true;
+        setTimeout(()=>{ btn.innerText = old; btn.disabled = false; }, 2000);
+    });
+
+    document.getElementById('back-to-top').addEventListener('click', function(e){
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
