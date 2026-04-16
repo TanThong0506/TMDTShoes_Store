@@ -137,9 +137,22 @@ def order_create(request):
     return redirect('orders:checkout')
 
 def order_success(request):
+    # 1. Sửa lại tên key cho khớp với hàm order_create (last_order_id)
     order_id = request.session.get('last_order_id')
-    if not order_id:
-        return redirect('products:product_list')
     
-    order = get_object_or_404(Order, id=order_id)
+    order = None
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+    
+    # 2. Nếu không thấy trong session, lấy đơn mới nhất của chính User đó
+    if not order:
+        if request.user.is_authenticated:
+            order = Order.objects.filter(user=request.user).order_by('-created_at').first()
+        else:
+            order = Order.objects.order_by('-created_at').first()
+
+    if not order:
+        return redirect('products:product_list')
+
+    # 3. Trả về template (Đảm bảo file order_success.html của bạn có đoạn Script tự F5)
     return render(request, 'order_success.html', {'order': order})

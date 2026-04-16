@@ -8,11 +8,18 @@ class OrderItemInline(admin.TabularInline):
     extra = 0 
 
 # 2. Khai báo Admin SAU và gọi Inline đã tạo ở trên vào
+# orders/admin.py
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'full_name', 'phone', 'total_price', 'payment_method', 'created_at']
-    list_filter = ['payment_method', 'created_at']
-    search_fields = ['full_name', 'phone']
+    # Thêm 'status' vào danh sách hiển thị
+    list_display = ['id', 'status', 'full_name', 'phone', 'total_price', 'payment_method', 'created_at']
     
-    # Bây giờ dòng này mới chạy được vì OrderItemInline đã tồn tại ở trên
+    # Thêm 'status' vào bộ lọc để dễ quản lý đơn hàng theo trạng thái
+    list_filter = ['status', 'payment_method', 'created_at']
+    
+    # Giúp bạn đổi trạng thái ngay tại màn hình danh sách mà không cần bấm vào chi tiết đơn
+    list_editable = ['status'] 
+    
+    search_fields = ['full_name', 'phone']
     inlines = [OrderItemInline]
