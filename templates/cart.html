@@ -98,7 +98,47 @@
             </div>
         </div>
     </div>
+
+{% if recommended_products %}
+<div class="mt-5 pt-5 border-top">
+    <h4 class="fw-bold mb-4"><i class="fas fa-heart text-danger"></i> Có thể bạn cũng thích</h4>
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+        {% for rp in recommended_products %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden rec-card" style="transition: transform 0.2s;">
+                <a href="{% url 'products:product_detail' rp.id %}" class="text-decoration-none h-100 d-flex flex-column">
+                    <div style="height: 180px; overflow: hidden; background: #fff;">
+                        <img src="{{ rp.image.url }}" class="w-100 h-100" style="object-fit: contain; transition: 0.3s;">
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="text-dark fw-bold text-truncate mb-1 small">{{ rp.name }}</h6>
+                        <p class="text-danger fw-bold mb-3">{{ rp.price|intcomma }}₫</p>
+                        
+                        <div class="mt-auto">
+                            <span class="btn btn-sm btn-outline-dark w-100 fw-bold rounded-pill">
+                                XEM CHI TIẾT
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
+
+<style>
+    /* Hiệu ứng khi di chuột vào card */
+    .rec-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .rec-card:hover img {
+        transform: scale(1.05);
+    }
+</style>
+{% endif %}
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -164,7 +204,6 @@
         });
     }
 
-    // Hàm xóa ĐÃ ĐƯỢC TỐI ƯU: Không hiện confirm, xóa mượt
     function removeFromCart(itemKey) {
         $.ajax({
             url: `/cart/remove/${itemKey}/`,
@@ -172,7 +211,6 @@
             success: function(data) {
                 if (data.success) {
                     $('.cart-count').text(data.cart_count);
-                    // Hiệu ứng FadeOut mượt mà
                     $(`#row-${itemKey}`).fadeOut(400, function() {
                         $(this).remove();
                         if ($('.item-row').length === 0) {
@@ -216,10 +254,15 @@
         font-variant-numeric: tabular-nums; 
     }
     .input-group { flex-wrap: nowrap !important; }
-    /* Thêm hiệu ứng hover cho nút xóa */
     .btn-light.text-danger:hover {
         background-color: #dc3545 !important;
         color: white !important;
+    }
+    /* Style mới cho các thẻ gợi ý */
+    .rec-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        transition: 0.3s ease-in-out;
     }
 </style>
 {% endblock %}

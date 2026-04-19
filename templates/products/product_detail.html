@@ -64,7 +64,7 @@
                 {% endwith %}
             </div>
 
-            <form id="add-to-cart-form" method="POST" action="{% url 'cart:add_to_cart' product.id %}"> 
+            <form id="add-to-cart-form" method="POST" action="{% url 'cart:cart_add' product.id %}">
                 {% csrf_token %}
                 <div class="mb-4">
                     <p class="fw-bold mb-2">

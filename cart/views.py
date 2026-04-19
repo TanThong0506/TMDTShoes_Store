@@ -5,6 +5,7 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
+import random # Thêm cái này ở đầu file để tạo mã đơn hàng ngẫu nhiên
 
 # Hàm phụ trợ xử lý cả 2 loại dữ liệu (int của web và dict của chatbot)
 def _get_cart_data(cart):
@@ -24,11 +25,15 @@ def cart_detail(request):
     cart = request.session.get('cart', {})
     items = []
     total = 0
+    product_ids_in_cart = [] # Danh sách ID để loại trừ sản phẩm đã có trong giỏ
+
     for item_key, item_val in cart.items():
         quantity = item_val['quantity'] if isinstance(item_val, dict) else item_val
         try:
             parts = item_key.split('_')
             p_id = parts[0]
+            product_ids_in_cart.append(int(p_id)) # Thêm ID vào danh sách loại trừ
+            
             size = parts[1] if len(parts) > 1 else "N/A"
             product = Product.objects.get(id=int(p_id))
             item_total = product.price * quantity
@@ -42,7 +47,21 @@ def cart_detail(request):
             })
         except (Product.DoesNotExist, ValueError, IndexError):
             continue 
-    return render(request, 'cart.html', {'items': items, 'total': total})
+
+    # --- PHẦN GỢI Ý SẢN PHẨM (SỬA Ở ĐÂY) ---
+    # Lấy 4 sản phẩm ngẫu nhiên không có trong giỏ hàng
+    recommended_products = Product.objects.exclude(id__in=product_ids_in_cart).order_by('?')[:4]
+    
+    # Nếu không còn sản phẩm nào để loại trừ, lấy 4 sản phẩm bất kỳ
+    if not recommended_products.exists():
+        recommended_products = Product.objects.all()[:4]
+    # ---------------------------------------
+
+    return render(request, 'cart.html', {
+        'items': items, 
+        'total': total,
+        'recommended_products': recommended_products # Truyền biến này ra template
+    })
 
 def add_to_cart(request, product_id):
     if request.method == 'POST':
@@ -152,7 +171,6 @@ def checkout(request):
                 product_id = parts[0]
                 size = parts[1] if len(parts) > 1 else "N/A"
                 
-                # Trích xuất số lượng an toàn
                 quantity = cart[key]['quantity'] if isinstance(cart[key], dict) else cart[key]
                 
                 product = Product.objects.get(id=int(product_id))
@@ -169,9 +187,14 @@ def checkout(request):
             except (Product.DoesNotExist, ValueError, IndexError):
                 continue
 
+    # --- PHẦN THÊM MỚI ĐỂ QUÉT MÃ QR ---
+    # Tạo một mã đơn hàng ngẫu nhiên để làm nội dung chuyển khoản cho chuyên nghiệp
+    order_id = random.randint(100000, 999999) 
+    
     context = {
         'items': checkout_items,
         'total_price': total_price,
+        'order_id': order_id, # Truyền cái này sang để hiện "Nội dung: DH123456"
     }
     return render(request, 'checkout.html', context)
 

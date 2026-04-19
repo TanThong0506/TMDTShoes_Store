@@ -72,9 +72,13 @@ def product_detail(request, pk):
     # Fallback: nếu vẫn ít, lấy sản phẩm mới nhất
     if recommended.count() < 6:
         fallback = Product.objects.filter(is_active=True).exclude(pk=product.pk).order_by('-id')
-        recommended = (recommended | fallback).distinct()
+        # Tìm dòng 75 và sửa thành như sau:
+        recommended_ids = list(recommended.values_list('id', flat=True)) + \
+                        list(fallback.values_list('id', flat=True))
 
-    recommended = recommended.order_by('?')[:8]
+        recommended = Product.objects.filter(id__in=recommended_ids).distinct()
+
+        recommended = recommended.order_by('?')[:8]
 
     context = {
         'product': product,
