@@ -125,6 +125,9 @@ class StorePolicy(models.Model):
     payment_policy = models.TextField(verbose_name="Nội dung Chính sách thanh toán")
     return_policy = models.TextField(verbose_name="Nội dung Chính sách đổi trả")
 
+    def __str__(self):
+        return self.title
+
 class Sale(models.Model):
     title = models.CharField(max_length=120, default='Flash Sale', verbose_name='Tiêu đề chương trình')
     products = models.ManyToManyField(Product, blank=True, related_name='sales', verbose_name='Sản phẩm tham gia')

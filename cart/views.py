@@ -5,7 +5,6 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
-import random # Thêm cái này ở đầu file để tạo mã đơn hàng ngẫu nhiên
 
 # Hàm phụ trợ xử lý cả 2 loại dữ liệu (int của web và dict của chatbot)
 def _get_cart_data(cart):
@@ -65,10 +64,13 @@ def cart_detail(request):
 
 def add_to_cart(request, product_id):
     if request.method == 'POST':
+        get_object_or_404(Product, id=product_id, is_active=True)
         cart = request.session.get('cart', {})
         try:
             quantity = int(request.POST.get('quantity', 1))
         except ValueError:
+            quantity = 1
+        if quantity < 1:
             quantity = 1
         size = request.POST.get('size', 'N/A')
         item_key = f"{product_id}_{size}"
@@ -154,49 +156,10 @@ def remove_from_cart(request, item_key):
     })
 
 def checkout(request):
-    cart = request.session.get('cart', {})
     item_keys_str = request.GET.get('items', '')
-    
     if not item_keys_str:
         return redirect('cart:cart_detail')
-    
-    selected_keys = item_keys_str.split(',')
-    checkout_items = []
-    total_price = 0
-    
-    for key in selected_keys:
-        if key in cart:
-            try:
-                parts = key.split('_')
-                product_id = parts[0]
-                size = parts[1] if len(parts) > 1 else "N/A"
-                
-                quantity = cart[key]['quantity'] if isinstance(cart[key], dict) else cart[key]
-                
-                product = Product.objects.get(id=int(product_id))
-                item_total = product.price * quantity
-                total_price += item_total
-                
-                checkout_items.append({
-                    'item_key': key,
-                    'product': product,
-                    'quantity': quantity,
-                    'size': size,
-                    'total_price': item_total,
-                })
-            except (Product.DoesNotExist, ValueError, IndexError):
-                continue
-
-    # --- PHẦN THÊM MỚI ĐỂ QUÉT MÃ QR ---
-    # Tạo một mã đơn hàng ngẫu nhiên để làm nội dung chuyển khoản cho chuyên nghiệp
-    order_id = random.randint(100000, 999999) 
-    
-    context = {
-        'items': checkout_items,
-        'total_price': total_price,
-        'order_id': order_id, # Truyền cái này sang để hiện "Nội dung: DH123456"
-    }
-    return render(request, 'checkout.html', context)
+    return redirect(f"/orders/checkout/?items={item_keys_str}")
 
 
 # -------------------- API wrapper views --------------------

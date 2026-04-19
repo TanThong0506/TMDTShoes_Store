@@ -278,6 +278,21 @@
 
 <script>
     $(document).ready(function() {
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         // 1. Slider chính: Đã XÓA asNavFor để cắt đứt liên kết
         $('.product-main-slider').slick({
             slidesToShow: 1, 
@@ -339,13 +354,24 @@
         $('#add-to-cart-form').on('submit', function(e) {
             e.preventDefault(); 
             var form = $(this);
+            var selectedSize = form.find('input[name="size"]:checked').val();
+            var hasSizeOptions = form.find('input[name="size"]').length > 0;
+
+            if (hasSizeOptions && !selectedSize) {
+                alert('Vui lòng chọn size trước khi thêm vào giỏ hàng.');
+                return;
+            }
             
             $.ajax({
                 type: "POST",
                 url: form.attr('action'),
                 data: form.serialize(),
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                dataType: 'json',
                 success: function(response) {
-                    $('.cart-count, #cart-count').text(response.cart_count);
+                    if (response.cart_count !== undefined) {
+                        $('.cart-count, #cart-count').text(response.cart_count);
+                    }
                     
                     var btn = form.find('button[type="submit"]');
                     var oldText = btn.text();
@@ -356,8 +382,14 @@
                         btn.text(oldText).addClass('btn-dark').removeClass('btn-success');
                     }, 2000);
                 },
-                error: function() {
-                    alert("Lỗi! Hãy chọn size trước.");
+                error: function(xhr) {
+                    var message = 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    } else if (xhr && xhr.status) {
+                        message += ` (Mã lỗi: ${xhr.status})`;
+                    }
+                    alert(message);
                 }
             });
         });
