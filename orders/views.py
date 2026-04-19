@@ -1,10 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
 from .models import Order, OrderItem
 from products.models import Product 
 from cart.models import Cart, CartItem 
+
+
+def _extract_quantity(cart_value):
+    if isinstance(cart_value, dict):
+        return int(cart_value.get('quantity', 0) or 0)
+    return int(cart_value or 0)
 
 def checkout(request):
     # Lấy danh sách key sản phẩm từ URL (ví dụ: ?items=1_40,2_39)
@@ -17,13 +21,15 @@ def checkout(request):
     if item_keys_str:
         for key in item_keys_str.split(','):
             if key in cart:
-                quantity = cart[key]
+                quantity = _extract_quantity(cart[key])
+                if quantity <= 0:
+                    continue
                 # Tách lấy ID từ key (ví dụ "1_39" -> lấy "1")
                 product_id = key.split('_')[0]
                 product = get_object_or_404(Product, id=product_id)
                 size = key.split('_')[1] if '_' in key else 'N/A'
                 
-                line_total = float(product.price) * int(quantity)
+                line_total = float(product.price) * quantity
                 
                 display_item = {
                     'product': product,
@@ -41,7 +47,6 @@ def checkout(request):
     }
     return render(request, 'checkout.html', context)
 
-@login_required
 def order_create(request):
     if request.method == 'POST':
         full_name = (request.POST.get('full_name') or '').strip()
@@ -60,15 +65,15 @@ def order_create(request):
         # Basic input validation
         if not full_name or not address or not phone:
             messages.error(request, 'Vui lòng cung cấp đầy đủ thông tin giao hàng.')
-            return redirect('orders:checkout')
+            return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         if len(full_name) > 200 or len(address) > 1000:
             messages.error(request, 'Thông tin quá dài, vui lòng kiểm tra lại.')
-            return redirect('orders:checkout')
+            return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         if not phone.isdigit() or len(phone) < 6:
             messages.error(request, 'Số điện thoại không hợp lệ.')
-            return redirect('orders:checkout')
+            return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         # 1. Tạo đơn hàng
         order = Order.objects.create(
@@ -85,12 +90,14 @@ def order_create(request):
         
         for key in item_keys_str.split(','):
             if key in cart_session:
-                quantity = cart_session[key]
+                quantity = _extract_quantity(cart_session[key])
+                if quantity <= 0:
+                    continue
                 product_id = key.split('_')[0]
                 size = key.split('_')[1] if '_' in key else 'N/A'
                 
                 product = get_object_or_404(Product, id=product_id)
-                line_total = float(product.price) * int(quantity)
+                line_total = float(product.price) * quantity
                 current_total += line_total
                 
                 OrderItem.objects.create(
@@ -115,7 +122,7 @@ def order_create(request):
         # B. CẬP NHẬT LẠI CON SỐ TRÊN HEADER (Dòng quan trọng nhất)
         # Tính tổng số lượng của những sản phẩm CÒN LẠI trong giỏ
         request.session['cart'] = cart_session
-        request.session['cart_count'] = sum(cart_session.values()) if cart_session else 0
+        request.session['cart_count'] = sum(_extract_quantity(v) for v in cart_session.values()) if cart_session else 0
         request.session.modified = True
 
         # C. Xóa trong Database (Sử dụng ID để né lỗi cấu trúc bảng)

@@ -31,7 +31,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Hosts
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
+_hosts = os.getenv('ALLOWED_HOSTS', '')
+if _hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _hosts.split(',') if h.strip()]
+else:
+    # Safe defaults for local development and Django test client.
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '[::1]', 'testserver']
 
 
 # Application definition
@@ -92,11 +97,11 @@ WSGI_APPLICATION = 'shoestore.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'shoe_store',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': os.getenv('DB_NAME', 'shoe_store'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '3307'),
     }
 }
 

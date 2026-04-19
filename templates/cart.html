@@ -190,7 +190,7 @@
             method: 'GET',
             success: function(data) {
                 if (data.success) {
-                    $('.cart-count').text(data.cart_count);
+                    $('#cart-count').text(data.cart_count);
                     if (data.item_count > 0) {
                         $(`#qty-${itemKey}`).text(data.item_count);
                         $(`#item-total-${itemKey}`).text(data.item_total);
@@ -210,7 +210,7 @@
             method: 'GET',
             success: function(data) {
                 if (data.success) {
-                    $('.cart-count').text(data.cart_count);
+                    $('#cart-count').text(data.cart_count);
                     $(`#row-${itemKey}`).fadeOut(400, function() {
                         $(this).remove();
                         if ($('.item-row').length === 0) {
@@ -231,7 +231,7 @@
 
         if (selectedKeys.length > 0) {
             let queryString = selectedKeys.join(',');
-            window.location.href = `/cart/checkout/?items=${queryString}`; 
+            window.location.href = `/orders/checkout/?items=${queryString}`;
         }
     });
 </script>

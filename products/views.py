@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, F  # ĐÃ THÊM F: Dùng để so sánh 2 cột
+from django.db.models import Q, F  # Dùng để so sánh 2 cột
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # BẮT BUỘC IMPORT ĐỂ PHÂN TRANG
 from .models import Product, Category, Brand, StorePolicy, Size, Sale
 from django.utils import timezone
 
@@ -9,7 +10,7 @@ def home(request):
     popular_categories = Category.objects.all()[:4] 
     latest_products = Product.objects.all().order_by('-id')[:8]
     
-    # ĐÃ THÊM LẠI: Lấy danh sách hãng để làm băng chuyền
+    # Lấy danh sách hãng để làm băng chuyền
     brands = Brand.objects.all() 
     
     context = {
@@ -21,8 +22,9 @@ def home(request):
     return render(request, 'home.html', context)
 
 def product_list(request):
-    # Lấy toàn bộ sản phẩm đang kinh doanh làm nền tảng ban đầu
-    products = Product.objects.filter(is_active=True)
+    # Lấy toàn bộ sản phẩm đang kinh doanh và SẮP XẾP THEO ID MỚI NHẤT
+    # (Bắt buộc phải có order_by thì Paginator mới không bị lỗi mất sản phẩm)
+    products = Product.objects.filter(is_active=True).order_by('-id')
     
     # === VALIDATION: BẮT ĐẦU XỬ LÝ BỘ LỌC TỪ URL ===
     # Chỉ giữ lại các ID là chữ số (chống hacker hoặc lỗi gõ nhầm chữ)
@@ -45,12 +47,29 @@ def product_list(request):
     products = products.distinct()
     # === KẾT THÚC XỬ LÝ BỘ LỌC ===
 
+    # === BẮT ĐẦU XỬ LÝ PHÂN TRANG (9 SẢN PHẨM / TRANG) ===
+    paginator = Paginator(products, 9)
+    page_number = request.GET.get('page')
+    
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        # Nếu url không có số trang (ví dụ /products/), mặc định lấy trang 1
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        # Nếu người dùng nhập số trang quá lớn, tự động đưa về trang cuối cùng
+        page_obj = paginator.page(paginator.num_pages)
+    # === KẾT THÚC PHÂN TRANG ===
+
     brands = Brand.objects.all()
     categories = Category.objects.all()
     all_sizes = Size.objects.all()
 
     context = {
-        'products': products,
+        # QUAN TRỌNG: Gán page_obj vào key 'products' để HTML cũ không bị lỗi trống trơn
+        'products': page_obj, 
+        # Vẫn giữ key 'page_obj' để HTML gọi ra các nút chuyển trang (1, 2, 3...)
+        'page_obj': page_obj, 
         'brands': brands,
         'categories': categories,
         'all_sizes': all_sizes,
