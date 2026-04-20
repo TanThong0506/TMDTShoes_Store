@@ -98,7 +98,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" aria-labelledby="accountMenu">
                             <li class="px-3 py-2 fw-bold text-dark border-bottom mb-2" style="font-size: 0.9rem;"><i class="fas fa-smile text-warning me-2"></i>Xin chào, {{ user.username }}</li>
                             <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="fas fa-id-card me-2 text-primary"></i> Thông tin cá nhân</a></li>
-                            <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="fas fa-history me-2 text-success"></i> Lịch sử đơn hàng</a></li>
+                            <li><a class="dropdown-item rounded-2 py-2" href="{% url 'products:order_history' %}"><i class="fas fa-history me-2 text-success"></i> Lịch sử đơn hàng</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item rounded-2 py-2 text-danger fw-bold" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Đăng xuất</a></li>
                         </ul>
