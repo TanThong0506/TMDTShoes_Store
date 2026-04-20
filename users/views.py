@@ -6,10 +6,15 @@ from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
+import logging
 
 # THÊM MỚI: Import thêm thư viện gửi mail và Model OTP
 from django.core.mail import send_mail
 from .models import PasswordResetOTP 
+
+
+logger = logging.getLogger(__name__)
 
 # HÀM XỬ LÝ ĐĂNG KÝ (GIỮ NGUYÊN)
 def register_view(request):
@@ -94,8 +99,8 @@ def logout_view(request):
 # 1. Nhập email và gửi OTP
 def forgot_password_view(request):
     if request.method == 'POST':
-        email = (request.POST.get('email') or '').strip()
-        user = User.objects.filter(email=email).first()
+        email = (request.POST.get('email') or '').strip().lower()
+        user = User.objects.filter(email__iexact=email).first()
         
         if user:
             # Lấy hoặc tạo mới bản ghi OTP cho người dùng
@@ -107,10 +112,21 @@ def forgot_password_view(request):
             message = f'Chào {user.username}, mã xác thực của bạn là: {otp_obj.otp}. Vui lòng không cung cấp mã này cho người khác.'
             
             try:
-                send_mail(subject, message, 'noreply@shoestore.com', [email])
-                request.session['reset_email'] = email # Lưu email vào phiên làm việc
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+                request.session['reset_email'] = user.email # Lưu email vào phiên làm việc
+                request.session.pop('debug_reset_otp', None)
+                if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+                    request.session['debug_reset_otp'] = otp_obj.otp
+                    messages.warning(request, 'Hệ thống đang chạy local: OTP được in trong terminal chạy server, không gửi về email thật.')
                 return redirect('verify_otp')
             except Exception as e:
+                logger.exception('Send OTP email failed: %s', e)
+                if settings.DEBUG:
+                    # Fallback cho môi trường dev để vẫn test được luồng quên mật khẩu.
+                    request.session['reset_email'] = email
+                    request.session['debug_reset_otp'] = otp_obj.otp
+                    messages.warning(request, f'Không gửi được email. Mã OTP test của bạn là: {otp_obj.otp}')
+                    return redirect('verify_otp')
                 messages.error(request, 'Lỗi hệ thống không thể gửi mail. Vui lòng thử lại sau!')
         else:
             messages.error(request, 'Email này chưa được đăng ký trong hệ thống!')
@@ -124,9 +140,19 @@ def verify_otp_view(request):
     if not email:
         return redirect('forgot_password')
 
+    user = User.objects.filter(email=email).first()
+    if not user:
+        request.session.pop('reset_email', None)
+        request.session.pop('debug_reset_otp', None)
+        messages.error(request, 'Phiên đặt lại mật khẩu đã hết hạn. Vui lòng thử lại.')
+        return redirect('forgot_password')
+
     if request.method == 'POST':
-        otp_input = request.POST.get('otp')
-        user = User.objects.get(email=email)
+        otp_input = (request.POST.get('otp') or '').strip()
+        if not otp_input.isdigit() or len(otp_input) != 6:
+            messages.error(request, 'OTP phải gồm đúng 6 chữ số!')
+            return render(request, 'users/verify_otp.html')
+
         # Kiểm tra mã OTP trong database
         otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp_input).first()
 
@@ -160,6 +186,7 @@ def reset_password_view(request):
                 # Xóa OTP đã dùng và dọn dẹp session
                 PasswordResetOTP.objects.filter(user=user).delete()
                 del request.session['reset_email']
+                request.session.pop('debug_reset_otp', None)
                 
                 messages.success(request, 'Đặt lại mật khẩu thành công! Hãy đăng nhập với mật khẩu mới.')
                 return redirect('login')

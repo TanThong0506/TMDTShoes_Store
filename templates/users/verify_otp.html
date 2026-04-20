@@ -6,6 +6,23 @@
         <h2 style="text-align: center;">XÁC THỰC OTP</h2>
         <p style="text-align: center; color: #777;">Mã đã được gửi về Email của bạn</p>
 
+        {% if request.session.debug_reset_otp %}
+            <div style="padding: 10px; margin-bottom: 15px; border-radius: 5px; text-align: center; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;">
+                OTP test (dev): <strong>{{ request.session.debug_reset_otp }}</strong>
+            </div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="padding: 10px; margin-bottom: 15px; border-radius: 5px; text-align: center;
+                    {% if message.tags == 'error' %} background-color: #ffcccc; color: #cc0000;
+                    {% elif message.tags == 'warning' %} background-color: #fff3cd; color: #856404;
+                    {% else %} background-color: #d4edda; color: #155724; {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <form method="POST">
             {% csrf_token %}
             <div class="input-group" style="margin-bottom: 20px;">
