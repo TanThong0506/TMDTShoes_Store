@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
-     style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
+      style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
     <div class="container text-center">
         <h1 class="display-3 fw-bold mb-3">EVERYDAY SNEAKER</h1>
         <p class="fs-4 mb-4">Nâng tầm phong cách mỗi ngày cùng bộ sưu tập mới nhất.</p>
@@ -114,7 +114,6 @@
                                 <span class="text-dark fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
                             {% endif %}
                         </div>
-                        
                     </div>
                 </div>
             </a>
@@ -126,6 +125,30 @@
             <p class="text-muted mb-0">Những mẫu giày mới nhất sẽ sớm được lên kệ. Bạn hãy đón chờ nhé!</p>
         </div>
         {% endfor %}
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100">
+            <i class="fas fa-shipping-fast text-warning fs-1 mb-3"></i>
+            <h5 class="fw-bold">Giao hàng cực nhanh</h5>
+            <p class="text-muted small mb-0">Đảm bảo đôi giày yêu thích đến tay Nam chỉ trong 2-3 ngày làm việc.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100">
+            <i class="fas fa-undo text-warning fs-1 mb-3"></i>
+            <h5 class="fw-bold">Đổi trả trong 7 ngày</h5>
+            <p class="text-muted small mb-0">Không vừa size? Đừng lo, Shoe Store hỗ trợ đổi size tận nơi cho bạn.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100">
+            <i class="fas fa-headset text-warning fs-1 mb-3"></i>
+            <h5 class="fw-bold">Hỗ trợ 24/7</h5>
+            <p class="text-muted small mb-0">Luôn lắng nghe và giải đáp thắc mắc của Nam bất kể lúc nào.</p>
+        </div>
     </div>
 </div>
 
@@ -161,6 +184,13 @@
     .home-product-card:hover .product-title { 
         color: #dc3545; 
     }
+
+    /* ĐÃ THÊM: Hiệu ứng nút MUA NGAY (CHỈ THÊM) */
+    .btn-lg:hover {
+        transform: scale(1.05);
+        transition: 0.3s;
+    }
+
     /* ============================================== */
 
     /* --- CSS CHO BĂNG CHUYỀN CHẠY MÃI MÃI --- */
