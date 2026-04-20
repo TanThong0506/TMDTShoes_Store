@@ -1,27 +1,5 @@
 """
 URL configuration for shoestore project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-"""
-URL configuration for shoestore project.
-"""
-"""
-URL configuration for shoestore project.
-"""
-"""
-URL configuration for shoestore project.
 """
 from django.contrib import admin
 from django.urls import path, include
@@ -48,15 +26,23 @@ urlpatterns = [
     # API xử lý Chatbot
     path('api/get_response/', views.get_response, name='get_response'),
     path('api/get_chat_history/', views.get_chat_history, name='get_chat_history'),
+    
     # KẾT NỐI TỚI APP USERS 
     path('users/', include('users.urls')),
     
-    path('cart/', include('cart.urls')), # <--- Thêm dòng này vào đây
+    path('cart/', include('cart.urls')), 
     # API endpoints for cart (REST-like)
     path('api/cart/', include('cart.api_urls')),
     # Central API router (DRF)
     path('api/', include('shoestore.api_urls')),
     path('orders/', include('orders.urls', namespace='orders')),
+
+    # ========================================================
+    # CHỈ THÊM: ĐƯỜNG DẪN HỖ TRỢ QUÊN MẬT KHẨU (KHÔNG SỬA CŨ)
+    # ========================================================
+    path('forgot-password/', include('users.urls')), 
+    path('verify-otp/', include('users.urls')),
+    path('reset-password/', include('users.urls')),
 ]
 
 if settings.DEBUG:

@@ -101,7 +101,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER', 'root'),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3307'),
+        'PORT': os.getenv('DB_PORT', '3306'),
     }
 }
 
@@ -287,3 +287,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
+
+# ==========================================
+# CẤU HÌNH GỬI EMAIL (QUÊN MẬT KHẨU)
+# ==========================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+# Thay bằng email và mật khẩu ứng dụng của bạn
+# Cấu hình trong settings.py
+
+EMAIL_HOST_USER = 'vonhatnam2004@gmail.com' # Email trong ảnh của bạn
+EMAIL_HOST_PASSWORD = 'duqy uekr abjt cqdy' # Dán 16 ký tự bạn vừa lấy ở Bước 1 vào đây
