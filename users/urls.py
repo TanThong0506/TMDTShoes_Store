@@ -13,4 +13,8 @@ urlpatterns = [
     path('api/logout/', api.LogoutAPIView.as_view(), name='api_logout'),
     path('api/token/', api.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', api.TokenRefreshView.as_view(), name='token_refresh'),
+    # Thêm các đường dẫn cho tính năng Quên mật khẩu
+    path('forgot-password/', views.forgot_password_view, name='forgot_password'),
+    path('verify-otp/', views.verify_otp_view, name='verify_otp'),
+    path('reset-password/', views.reset_password_view, name='reset_password'),
 ]

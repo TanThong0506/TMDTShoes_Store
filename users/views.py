@@ -1,23 +1,29 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-# BƯỚC 1: Mình đã thêm chữ 'logout' vào dòng import này
+# BƯỚC 1: Giữ nguyên các import cũ của bạn
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
+import logging
+
+# THÊM MỚI: Import thêm thư viện gửi mail và Model OTP
+from django.core.mail import send_mail
+from .models import PasswordResetOTP 
 
 
-# HÀM XỬ LÝ ĐĂNG KÝ
+logger = logging.getLogger(__name__)
+
+# HÀM XỬ LÝ ĐĂNG KÝ (GIỮ NGUYÊN)
 def register_view(request):
     if request.method == 'POST':
-        # 1. Lấy dữ liệu người dùng nhập từ form HTML
         username = (request.POST.get('username') or '').strip()
         email = (request.POST.get('email') or '').strip()
         password = request.POST.get('password') or ''
         confirm_password = request.POST.get('confirm_password') or ''
 
-        # 2. Kiểm tra dữ liệu
         if not username:
             messages.error(request, 'Tên đăng nhập không được để trống!')
             return redirect('register')
@@ -26,7 +32,6 @@ def register_view(request):
             messages.error(request, 'Email không được để trống!')
             return redirect('register')
 
-        # validate email format
         try:
             validate_email(email)
         except ValidationError:
@@ -37,7 +42,6 @@ def register_view(request):
             messages.error(request, 'Mật khẩu xác nhận không khớp!')
             return redirect('register')
 
-        # validate password strength using Django validators
         try:
             validate_password(password)
         except ValidationError as e:
@@ -52,21 +56,18 @@ def register_view(request):
             messages.error(request, 'Email này đã được sử dụng!')
             return redirect('register')
 
-        # 3. Tạo tài khoản và lưu vào Database
         user = User.objects.create_user(username=username, email=email, password=password)
         user.save()
         
         messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
-        return redirect('login') # Đăng ký xong tự động chuyển sang trang đăng nhập
+        return redirect('login')
 
-    # Nếu là request GET (vào trang bình thường) thì chỉ hiện giao diện
     return render(request, 'register.html')
 
 
-# HÀM XỬ LÝ ĐĂNG NHẬP
+# HÀM XỬ LÝ ĐĂNG NHẬP (GIỮ NGUYÊN)
 def login_view(request):
     if request.method == 'POST':
-        # 1. Lấy dữ liệu từ form
         username = (request.POST.get('username') or '').strip()
         password = request.POST.get('password') or ''
 
@@ -74,21 +75,124 @@ def login_view(request):
             messages.error(request, 'Vui lòng nhập cả tên đăng nhập và mật khẩu.')
             return render(request, 'login.html')
 
-        # 2. Kiểm tra xem tài khoản có đúng không
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # 3. Đăng nhập thành công
             login(request, user)
-            return redirect('home') # Chuyển hướng về trang chủ
+            return redirect('home') 
         else:
-            # 4. Đăng nhập thất bại
             messages.error(request, 'Sai tên đăng nhập hoặc mật khẩu!')
 
     return render(request, 'login.html')
 
 
-# BƯỚC 2: THÊM HÀM ĐĂNG XUẤT VÀO CUỐI CÙNG
+# HÀM ĐĂNG XUẤT (GIỮ NGUYÊN)
 def logout_view(request):
-    logout(request) # Lệnh này xóa phiên đăng nhập hiện tại
-    return redirect('home') # Đá người dùng về trang chủ
+    logout(request) 
+    return redirect('home') 
+
+
+# ============================================================
+# PHẦN THÊM MỚI: LOGIC QUÊN MẬT KHẨU (OTP)
+# ============================================================
+
+# 1. Nhập email và gửi OTP
+def forgot_password_view(request):
+    if request.method == 'POST':
+        email = (request.POST.get('email') or '').strip().lower()
+        user = User.objects.filter(email__iexact=email).first()
+        
+        if user:
+            # Lấy hoặc tạo mới bản ghi OTP cho người dùng
+            otp_obj, created = PasswordResetOTP.objects.get_or_create(user=user)
+            otp_obj.generate_otp()
+            
+            # Gửi mail thực tế
+            subject = '[Shoestore] Mã OTP đặt lại mật khẩu'
+            message = f'Chào {user.username}, mã xác thực của bạn là: {otp_obj.otp}. Vui lòng không cung cấp mã này cho người khác.'
+            
+            try:
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+                request.session['reset_email'] = user.email # Lưu email vào phiên làm việc
+                request.session.pop('debug_reset_otp', None)
+                if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+                    request.session['debug_reset_otp'] = otp_obj.otp
+                    messages.warning(request, 'Hệ thống đang chạy local: OTP được in trong terminal chạy server, không gửi về email thật.')
+                return redirect('verify_otp')
+            except Exception as e:
+                logger.exception('Send OTP email failed: %s', e)
+                if settings.DEBUG:
+                    # Fallback cho môi trường dev để vẫn test được luồng quên mật khẩu.
+                    request.session['reset_email'] = email
+                    request.session['debug_reset_otp'] = otp_obj.otp
+                    messages.warning(request, f'Không gửi được email. Mã OTP test của bạn là: {otp_obj.otp}')
+                    return redirect('verify_otp')
+                messages.error(request, 'Lỗi hệ thống không thể gửi mail. Vui lòng thử lại sau!')
+        else:
+            messages.error(request, 'Email này chưa được đăng ký trong hệ thống!')
+            
+    return render(request, 'users/forgot_password.html')
+
+
+# 2. Xác nhận OTP
+def verify_otp_view(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('forgot_password')
+
+    user = User.objects.filter(email=email).first()
+    if not user:
+        request.session.pop('reset_email', None)
+        request.session.pop('debug_reset_otp', None)
+        messages.error(request, 'Phiên đặt lại mật khẩu đã hết hạn. Vui lòng thử lại.')
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        otp_input = (request.POST.get('otp') or '').strip()
+        if not otp_input.isdigit() or len(otp_input) != 6:
+            messages.error(request, 'OTP phải gồm đúng 6 chữ số!')
+            return render(request, 'users/verify_otp.html')
+
+        # Kiểm tra mã OTP trong database
+        otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp_input).first()
+
+        if otp_record:
+            return redirect('reset_password')
+        else:
+            messages.error(request, 'Mã OTP bạn nhập không chính xác!')
+            
+    return render(request, 'users/verify_otp.html')
+
+
+# 3. Thiết lập mật khẩu mới
+def reset_password_view(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if password == confirm_password:
+            try:
+                # Kiểm tra độ mạnh mật khẩu mới
+                validate_password(password)
+                
+                user = User.objects.get(email=email)
+                user.set_password(password) # Mã hóa mật khẩu mới
+                user.save()
+                
+                # Xóa OTP đã dùng và dọn dẹp session
+                PasswordResetOTP.objects.filter(user=user).delete()
+                del request.session['reset_email']
+                request.session.pop('debug_reset_otp', None)
+                
+                messages.success(request, 'Đặt lại mật khẩu thành công! Hãy đăng nhập với mật khẩu mới.')
+                return redirect('login')
+            except ValidationError as e:
+                messages.error(request, ' '.join(e.messages))
+        else:
+            messages.error(request, 'Mật khẩu xác nhận không trùng khớp!')
+
+    return render(request, 'users/reset_password.html')
