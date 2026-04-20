@@ -37,12 +37,6 @@ urlpatterns = [
     path('api/', include('shoestore.api_urls')),
     path('orders/', include('orders.urls', namespace='orders')),
 
-    # ========================================================
-    # CHỈ THÊM: ĐƯỜNG DẪN HỖ TRỢ QUÊN MẬT KHẨU (KHÔNG SỬA CŨ)
-    # ========================================================
-    path('forgot-password/', include('users.urls')), 
-    path('verify-otp/', include('users.urls')),
-    path('reset-password/', include('users.urls')),
 ]
 
 if settings.DEBUG:
