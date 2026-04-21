@@ -74,10 +74,10 @@
                 </li>
             </ul>
 
-            <form class="d-flex mx-lg-3 my-3 my-lg-0" action="{% url 'products:search' %}" method="GET" style="min-width: 250px;">
+            <form class="mx-lg-4 my-3 my-lg-0" action="{% url 'products:search' %}" method="GET" style="width: 100%; max-width: 450px;">
                 <div class="input-group">
-                    <input class="form-control border-0 bg-secondary text-white placeholder-light" style="--bs-bg-opacity: .2;" type="search" name="q" placeholder="Tìm giày..." value="{{ query|default:'' }}" required>
-                    <button class="btn btn-warning shadow-none" type="submit"><i class="fas fa-search"></i></button>
+                    <input class="form-control bg-dark border-secondary text-light placeholder-light" style="border-radius: 20px 0 0 20px;" type="search" name="q" placeholder="Tìm kiếm giày..." value="{{ query|default:'' }}" required>
+                    <button class="btn btn-warning border-0 px-3" style="border-radius: 0 20px 20px 0; box-shadow: none;" type="submit"><i class="fas fa-search"></i></button>
                 </div>
             </form>
 
@@ -97,7 +97,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" aria-labelledby="accountMenu">
                             <li class="px-3 py-2 fw-bold text-dark border-bottom mb-2" style="font-size: 0.9rem;"><i class="fas fa-smile text-warning me-2"></i>Xin chào, {{ user.username }}</li>
-                            <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="fas fa-id-card me-2 text-primary"></i> Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item rounded-2 py-2" href="{% url 'profile' %}"><i class="fas fa-id-card me-2 text-primary"></i> Thông tin cá nhân</a></li>
                             <li><a class="dropdown-item rounded-2 py-2" href="{% url 'products:order_history' %}"><i class="fas fa-history me-2 text-success"></i> Lịch sử đơn hàng</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item rounded-2 py-2 text-danger fw-bold" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Đăng xuất</a></li>
@@ -223,7 +223,7 @@
                     let className = item.is_bot ? 'msg-bot' : 'msg-user';
                     
                     // Ẩn đi các mã kỹ thuật nếu còn dính trong lịch sử
-                    let cleanedText = item.message.replace(/\[CHOOSE_SIZE:.*?\]/g, '').replace(/\[ADD_CART:.*?\]/g, '');
+                    let cleanedText = item.message.replace(/\[CHOOSE_SIZE:.*?\]/g, '').replace(/\[ASK_BOTH:.*?\]/g, '').replace(/\[ASK_SIZE:.*?\]/g, '').replace(/\[ASK_QTY:.*?\]/g, '').replace(/\[ADD_CART:.*?\]/g, '');
                     
                     // Render hình ảnh từ lịch sử chat
                     cleanedText = cleanedText.replace(/\[SHOW_IMAGE:\s*([^\]]+)\]/g, '<br><img src="$1" class="chat-img"><br>');
@@ -236,6 +236,16 @@
                 setTimeout(() => {
                     widgetBody.scrollTop = widgetBody.scrollHeight;
                 }, 150);
+            }
+            
+            // Tự động mở lại hộp chat nếu đang reload từ giỏ hàng
+            if (sessionStorage.getItem('keep_chat_open') === 'true') {
+                sessionStorage.removeItem('keep_chat_open');
+                setTimeout(() => {
+                    if (widgetWindow.style.display !== 'flex') {
+                        toggleWidget();
+                    }
+                }, 300);
             }
         });
     }
@@ -257,10 +267,12 @@
     }
 
     // Khi bấm Chọn Size
-    function submitOrder(productId, size, btnElement) {
+    function submitOrderWithQty(productId, size, btnElement) {
+        const qtyInput = document.getElementById(`qty-input-${productId}`);
+        const qty = qtyInput ? qtyInput.value : 1;
         removeOptionsBox(btnElement);
-        const hiddenMessage = `Xác nhận đặt mua mã ${productId} size ${size}`;
-        const displayMessage = `Mình chọn size ${size}`;
+        const hiddenMessage = `Xác nhận đặt mua mã ${productId} size ${size} số lượng ${qty}`;
+        const displayMessage = `Mình chọn size ${size}, số lượng ${qty}`;
         processChatApi(hiddenMessage, displayMessage);
     }
 
@@ -283,7 +295,7 @@
         fetch('/api/get_response/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: apiText })
+            body: JSON.stringify({ message: apiText, display_message: displayText })
         })
         .then(response => response.json())
         .then(data => {
@@ -291,21 +303,71 @@
             if (data.response) {
                 let aiText = data.response;
                 let actionHtml = '';
+                // Mật lệnh xử lý UI giỏ hàng
+                const askBothRegex = /\[ASK_BOTH:\s*(\d+)\s*:\s*([^\]]+)\]/;
+                const askSizeRegex = /\[ASK_SIZE:\s*(\d+)\s*:\s*([^\]:]+)\s*:\s*(\d+)\]/;
+                const askQtyRegex = /\[ASK_QTY:\s*(\d+)\s*:\s*([^\]]+)\]/;
+
+                // Xử lý giỏ hàng tự động reload
+                if (data.added_to_cart && window.location.pathname.includes('/cart')) {
+                    sessionStorage.setItem('keep_chat_open', 'true');
+                    setTimeout(() => window.location.reload(), 1500);
+                }
                 
-                // Mật lệnh 1: Nút SIZE
-                const sizeRegex = /\[CHOOSE_SIZE:\s*(\d+)\s*:\s*([^\]]+)\]/;
-                const match = aiText.match(sizeRegex);
-                
-                if (match) {
+                if (aiText.match(askBothRegex)) {
+                    const match = aiText.match(askBothRegex);
                     const productId = match[1];
                     const sizes = match[2].split(',').map(s => s.trim());
-                    aiText = aiText.replace(sizeRegex, ''); 
+                    aiText = aiText.replace(askBothRegex, ''); 
                     
-                    actionHtml += '<div class="options-box"><div style="width:100%; margin-bottom:5px; font-weight:bold; font-size:0.9rem;">Chọn size muốn thêm vào giỏ:</div>';
+                    actionHtml += `
+                        <div class="options-box" style="flex-direction: column; align-items: flex-start;">
+                            <div style="font-weight:bold; font-size:0.9rem; margin-bottom: 8px;">Vui lòng chọn số lượng và size:</div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center;">
+                                <label style="font-size:0.85rem; margin-right: 8px;">Số lượng:</label>
+                                <input type="number" id="qty-input-${productId}" value="1" min="1" max="99" style="width: 60px; border-radius: 5px; border: 1px solid #ccc; padding: 2px 5px; text-align: center;">
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    `;
                     sizes.forEach(size => {
-                        actionHtml += `<button class="btn-size" onclick="submitOrder('${productId}', '${size}', this)">Size ${size}</button>`;
+                        actionHtml += `<button class="btn-size" onclick="submitOrderWithQty('${productId}', '${size}', this)" style="margin: 0;">Size ${size}</button>`;
                     });
-                    actionHtml += `<button class="btn-cancel" onclick="cancelOrder(this)">Hủy</button></div>`;
+                    actionHtml += `<button class="btn-cancel" onclick="cancelOrder(this)" style="margin: 0;">Hủy</button></div></div>`;
+                }
+                else if (aiText.match(askSizeRegex)) {
+                    const match = aiText.match(askSizeRegex);
+                    const productId = match[1];
+                    const sizes = match[2].split(',').map(s => s.trim());
+                    const preQty = match[3];
+                    aiText = aiText.replace(askSizeRegex, ''); 
+                    
+                    actionHtml += `
+                        <div class="options-box" style="flex-direction: column; align-items: flex-start;">
+                            <div style="font-weight:bold; font-size:0.9rem; margin-bottom: 8px;">Bạn chọn size nào cho ${preQty} sản phẩm ạ:</div>
+                            <input type="hidden" id="qty-input-${productId}" value="${preQty}">
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    `;
+                    sizes.forEach(size => {
+                        actionHtml += `<button class="btn-size" onclick="submitOrderWithQty('${productId}', '${size}', this)" style="margin: 0;">Size ${size}</button>`;
+                    });
+                    actionHtml += `<button class="btn-cancel" onclick="cancelOrder(this)" style="margin: 0;">Hủy</button></div></div>`;
+                }
+                else if (aiText.match(askQtyRegex)) {
+                    const match = aiText.match(askQtyRegex);
+                    const productId = match[1];
+                    const size = match[2].trim();
+                    aiText = aiText.replace(askQtyRegex, ''); 
+                    
+                    actionHtml += `
+                        <div class="options-box" style="flex-direction: column; align-items: flex-start;">
+                            <div style="font-weight:bold; font-size:0.9rem; margin-bottom: 8px;">Số lượng size ${size} là bao nhiêu ạ:</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="number" id="qty-input-${productId}" value="1" min="1" max="99" style="width: 60px; border-radius: 5px; border: 1px solid #ccc; padding: 2px 5px; text-align: center;">
+                                <button class="btn-size" onclick="submitOrderWithQty('${productId}', '${size}', this)" style="margin: 0; background: #ffc107; color: #000; border-color: #ffc107;"><i class="fas fa-check"></i> Chọn</button>
+                                <button class="btn-cancel" onclick="cancelOrder(this)" style="margin: 0;">Hủy</button>
+                            </div>
+                        </div>
+                    `;
                 }
 
                 // Mật lệnh 2: Render Hình Ảnh Sản phẩm

@@ -43,3 +43,19 @@ class PasswordResetOTP(models.Model):
 
     def __str__(self):
         return f"OTP: {self.otp} - Tài khoản: {self.user.username}"
+
+
+# ============================================================
+# PHẦN THÊM MỚI: MODEL LƯU TRỮ THÔNG TIN CÁ NHÂN (PROFILE)
+# ============================================================
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Số điện thoại")
+    address = models.TextField(null=True, blank=True, verbose_name="Địa chỉ giao hàng")
+
+    class Meta:
+        verbose_name = "Thông tin cá nhân"
+        verbose_name_plural = "Thông tin cá nhân"
+
+    def __str__(self):
+        return f"Profile của {self.user.username}"

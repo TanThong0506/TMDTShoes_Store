@@ -134,10 +134,7 @@
                             {% endfor %}
                         </div>
 
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-dark w-100 btn-sm mb-2 fw-bold py-2">ÁP DỤNG</button>
-                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary w-100 btn-sm text-decoration-none">Xóa tất cả</a>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -208,12 +205,14 @@
             }
         });
 
-        // ĐẦ THÊM: Nếu bấm nút "ÁP DỤNG" lọc mới, reset trang về 1
         const filterForm = document.getElementById('filter-form');
-        filterForm.addEventListener('submit', function() {
-            if (!this.dataset.isPaginating) {
+        
+        // Tự động submit khi thay đổi filter
+        document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
                 document.getElementById('page-input').value = 1;
-            }
+                filterForm.submit();
+            });
         });
     });
 

@@ -59,7 +59,8 @@ def clean_text_for_db(text):
     """Xóa các emoji để tránh lỗi MySQL 1366 khi lưu vào Database."""
     if not text:
         return ""
-    return re.sub(r'[^\x00-\xFFFF]', '', text)
+    # Chỉ giữ lại các ký tự thuộc chuẩn BMP (bao gồm tiếng Việt), loại bỏ emoji
+    return ''.join(c for c in text if ord(c) < 0x10000)
 
 
 # ==========================================
@@ -75,16 +76,17 @@ def get_response(request):
         try:
             data = json.loads(request.body)
             user_message = data.get('message', '')
+            display_message = data.get('display_message', user_message)
             
             if not user_message:
                 return JsonResponse({'error': 'Tin nhắn trống.'}, status=400)
 
-            # Lưu tin nhắn khách hàng (đã lọc emoji)
+            # Lưu tin nhắn khách hàng 
             user = request.user if request.user.is_authenticated else None
             if user:
                 ChatMessage.objects.create(
                     user=user, 
-                    message=clean_text_for_db(user_message), 
+                    message=clean_text_for_db(display_message), 
                     is_bot=False
                 )
 
@@ -102,21 +104,27 @@ def get_response(request):
             # ==========================================
             # DẠY AI: CHUYÊN VIÊN TƯ VẤN CAO CẤP
             # ==========================================
+            is_authenticated = request.user.is_authenticated
+            auth_status = "ĐÃ ĐĂNG NHẬP" if is_authenticated else "CHƯA ĐĂNG NHẬP"
+
             system_prompt = f"""
             Bạn là chuyên viên tư vấn bán hàng cao cấp của Shoe Store - "Nâng bước thành công".
             
-            🌟 THÔNG TIN CỬA HÀNG:
+            🌟 THÔNG TIN CỬA HÀNG & KHÁCH HÀNG:
             - Địa chỉ: Quận Hải Châu, TP. Đà Nẵng | Hotline: 0905.123.456
-            - Chính sách: Freeship đơn trên 1 triệu VNĐ. Giao hỏa tốc Đà Nẵng 2h. Hỗ trợ đổi size/mẫu trong 7 ngày.
+            - Khách hàng đang chat ở trạng thái: {auth_status}
 
             🎯 KỸ NĂNG TƯ VẤN & BÁN HÀNG:
-            1. GIỚI THIỆU TRUYỀN CẢM HỨNG: Khi khách yêu cầu giới thiệu về một phân loại giày (Running, Bóng rổ, Lifestyle...), hãy viết 1 đoạn giới thiệu bay bổng về đặc tính nổi bật của dòng đó. Trình bày: In đậm tên sản phẩm, dùng gạch đầu dòng, chèn emoji hợp lý (👟, 🔥, ✨).
-            2. HIỂN THỊ HÌNH ẢNH SẢN PHẨM: Khi khách yêu cầu "xem chi tiết", "xem hình", "hình ảnh của" một sản phẩm, bạn BẮT BUỘC chèn đoạn mã sau vào câu trả lời để hiển thị ảnh: [SHOW_IMAGE: Đường_Dẫn_Hình_Ảnh_Trong_Dữ_Liệu]
-               - Ví dụ: "Dạ đây là hình ảnh đôi giày bạn quan tâm ạ: [SHOW_IMAGE: /media/product_images/giay.png]"
-            3. KHI NÀO HỎI SIZE?: **CHỈ KHI** khách nói rõ ý định MUA một SẢN PHẨM CỤ THỂ ("thêm vào giỏ", "mua đôi này", "lấy mã X"), bạn MỚI ĐƯỢC phản hồi kèm mã: [CHOOSE_SIZE: Mã SP: Size1, Size2]
-               - Tuyệt đối không gắn mã này nếu khách chỉ đang hỏi thông tin.
-            4. HOÀN TẤT GIỎ HÀNG: Khi khách chat đúng cú pháp "Xác nhận đặt mua mã X size Y", hãy báo thành công và chèn mã: [ADD_CART: X: Y] ở cuối.
-            5. Giao tiếp: Xưng "mình", gọi "bạn". Nhiệt tình, lịch sự.
+            1. GIỚI THIỆU SẢN PHẨM: Trình bày in đậm tên sản phẩm, dùng gạch đầu dòng, chèn emoji (👟, 🔥, ✨).
+            2. HIỂN THỊ HÌNH ẢNH: BẮT BUỘC chèn đoạn mã: [SHOW_IMAGE: Đường_Dẫn_Hình_Ảnh] khi được yêu cầu xem hình.
+            3. QUY TẮC THÊM VÀO GIỎ HÀNG (QUAN TRỌNG NHẤT):
+               - NẾU KHÁCH HÀNG "CHƯA ĐĂNG NHẬP": BẠN TUYỆT ĐỐI KHÔNG cho khách thêm vào giỏ. Bất kỳ yêu cầu mua hàng nào cũng phải bị từ chối: "Xin lỗi, hãy đăng kí hoặc đăng nhập rồi mới thêm giỏ hàng được nhé!". KHÔNG cấp bất kỳ mã nào.
+               - NẾU KHÁCH HÀNG "ĐÃ ĐĂNG NHẬP":
+                   + Nếu khách ĐÃ nhập Số lượng nhưng CHƯA chọn Size: Phát mã [ASK_SIZE: Mã SP: Size1, Size2 : Số_Lượng_Khách_Chọn] để hệ thống hỏi Size.
+                   + Nếu khách ĐÃ nhập Size nhưng CHƯA nhập Số lượng: Phát mã [ASK_QTY: Mã SP: Size_Khách_Chọn] để hệ thống hỏi Số lượng.
+                   + Nếu khách CHƯA nhập CẢ Size và Số lượng: Phát mã [ASK_BOTH: Mã SP: Size1, Size2] để hệ thống hỏi cả hai.
+                   + Nếu khách ĐÃ nhắc đến đầy đủ CẢ Size VÀ Số lượng: TRỰC TIẾP chèn mã [ADD_CART: Mã_SP : Size : Số_Lượng] ở cuối câu. (Hệ thống sẽ tự nhận dạng, bạn không cần hỏi thêm).
+            4. Giao tiếp: nhiệt tình, xưng "mình", gọi "bạn".
 
             --- DỮ LIỆU SẢN PHẨM ---
             {products_context}
@@ -134,30 +142,33 @@ def get_response(request):
             )
             ai_reply = completion.choices[0].message.content
 
-            # --- XỬ LÝ MẬT LỆNH GIỎ HÀNG THỰC TẾ TRONG SESSION ---
-            cart_match = re.search(r'\[ADD_CART:\s*(\d+)\s*:\s*([^\]]+)\]', ai_reply)
+            cart_match = re.search(r'\[ADD_CART:\s*(\d+)\s*:\s*([^\]:]+)(?:\s*:\s*(\d+))?\]', ai_reply)
             cart = request.session.get('cart', {})
             if not isinstance(cart, dict): cart = {}
+            added_to_cart = False
 
-            if cart_match:
-                p_id = cart_match.group(1)
+            if cart_match and is_authenticated:
+                p_id = cart_match.group(1).strip()
                 size = cart_match.group(2).strip()
+                qty_str = cart_match.group(3)
+                qty = int(qty_str.strip()) if qty_str else 1
                 try:
                     product = Product.objects.get(id=p_id)
                     key = f"{p_id}_{size}"
                     if key in cart:
-                        cart[key]['quantity'] += 1
+                        cart[key]['quantity'] += qty
                     else:
                         cart[key] = {
                             'product_id': p_id,
                             'name': product.name, 
                             'price': str(product.price), 
-                            'quantity': 1, 
+                            'quantity': qty, 
                             'size': size
                         }
                     request.session['cart'] = cart
                     request.session.modified = True
-                    ai_reply = re.sub(r'\[ADD_CART:.*?\]', f'\n\n[Hệ thống: Đã thêm {product.name} size {size} vào giỏ! 🛍️]', ai_reply)
+                    added_to_cart = True
+                    ai_reply = re.sub(r'\[ADD_CART:.*?\]', f'\n\n[Hệ thống: Đã thêm {qty} sản phẩm {product.name} size {size} vào giỏ! 🛍️]', ai_reply)
                 except Exception:
                     pass
 
@@ -172,7 +183,7 @@ def get_response(request):
                     is_bot=True
                 )
 
-            return JsonResponse({'response': ai_reply, 'cart_count': cart_count})
+            return JsonResponse({'response': ai_reply, 'cart_count': cart_count, 'added_to_cart': added_to_cart})
 
         except Exception as e:
             logger.error(traceback.format_exc())
