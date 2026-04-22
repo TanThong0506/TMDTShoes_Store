@@ -1,8 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect # ĐÃ THÊM: redirect
 from django.db.models import Q, F  # Dùng để so sánh 2 cột
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # BẮT BUỘC IMPORT ĐỂ PHÂN TRANG
-from .models import Product, Category, Brand, StorePolicy, Size, Sale
+from .models import Product, Category, Brand, StorePolicy, Size, Sale, Review # ĐÃ THÊM: Review
+from .forms import ReviewForm # ĐÃ THÊM: ReviewForm
 from django.utils import timezone
+from django.contrib import messages # ĐÃ THÊM: messages
 
 def home(request):
     # Lọc chuẩn giày Sale (Chỉ lấy những giày có giá gốc lớn hơn giá bán hiện tại)
@@ -99,10 +101,30 @@ def product_detail(request, pk):
 
         recommended = recommended.order_by('?')[:8]
 
+    # === CHỈ THÊM: Logic xử lý Đánh giá sản phẩm ===
+    reviews = product.reviews.all().order_by('-created_at')
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, "Bạn cần đăng nhập để đánh giá!")
+            return redirect('login')
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
+            messages.success(request, "Đánh giá của bạn đã được gửi!")
+            return redirect('products:product_detail', pk=pk)
+    else:
+        form = ReviewForm()
+    # =============================================
+
     context = {
         'product': product,
         'policy': policy,
         'recommended_products': recommended,
+        'reviews': reviews, # THÊM VÀO CONTEXT
+        'form': form,       # THÊM VÀO CONTEXT
     }
     return render(request, 'products/product_detail.html', context)
 
