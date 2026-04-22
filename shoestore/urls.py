@@ -23,7 +23,7 @@ urlpatterns = [
     
     # Kết nối tới App products
     path('products/', include('products.urls')), 
-    # API xử lý Chatbot
+    # Legacy chatbot API (backward compatibility)
     path('api/get_response/', views.get_response, name='get_response'),
     path('api/get_chat_history/', views.get_chat_history, name='get_chat_history'),
     
@@ -31,10 +31,12 @@ urlpatterns = [
     path('users/', include('users.urls')),
     
     path('cart/', include('cart.urls')), 
-    # API endpoints for cart (REST-like)
+    # Legacy cart event APIs (backward compatibility)
     path('api/cart/', include('cart.api_urls')),
-    # Central API router (DRF)
+    # Legacy central API router
     path('api/', include('shoestore.api_urls')),
+    # Versioned API (recommended)
+    path('api/v1/', include('shoestore.api_urls')),
     path('orders/', include('orders.urls', namespace='orders')),
 
 ]

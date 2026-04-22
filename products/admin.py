@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django import forms  # <-- Bắt buộc phải import forms
-from .models import Product, ProductImage, Size, Category, Brand, Review, StorePolicy
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, CharField
+from django.db.models.functions import Cast, Substr
+from collections import defaultdict
+from django.urls import path
+from django.template.response import TemplateResponse
+from .models import Product, ProductImage, Size, Category, Brand, Review, StorePolicy, SalesReport
 from .models import Sale
+from orders.models import OrderItem
 
 # --- 1. TẠO FORM ẢO CHO ADMIN ĐỂ THÊM Ô % GIẢM GIÁ ---
 class ProductAdminForm(forms.ModelForm):
@@ -65,6 +71,128 @@ class ProductAdmin(admin.ModelAdmin):
         return ", ".join([cat.name for cat in obj.category.all()])
     display_categories.short_description = 'Loại sản phẩm'
 
+
+class SalesReportAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/products/salesreport/change_list.html'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'revenue-report/',
+                self.admin_site.admin_view(self.revenue_report_view),
+                name='products_salesreport_revenue_report',
+            ),
+        ]
+        return custom_urls + urls
+
+    def revenue_report_view(self, request):
+        context = dict(
+            self.admin_site.each_context(request),
+            title='Báo cáo doanh thu',
+            sales_chart_data=self._build_revenue_context(),
+            opts=self.model._meta,
+        )
+        return TemplateResponse(request, 'admin/products/salesreport/revenue_report.html', context)
+
+    def _build_revenue_context(self):
+        completed_statuses = ['Completed', 'Đã thanh toán', 'Đã thanh toán/Hoàn thành', 'Hoàn thành']
+        base_queryset = OrderItem.objects.filter(order__status__in=completed_statuses)
+        month_key_expr = Substr(Cast('order__created_at', output_field=CharField()), 1, 7)
+
+        revenue_expr = ExpressionWrapper(
+            F('price') * F('quantity'),
+            output_field=DecimalField(max_digits=18, decimal_places=0)
+        )
+
+        monthly_totals = (
+            base_queryset
+            .annotate(month_key=month_key_expr)
+            .values('month_key')
+            .annotate(total_revenue=Sum(revenue_expr), total_quantity=Sum('quantity'))
+            .order_by('month_key')
+        )
+
+        product_totals = (
+            base_queryset
+            .annotate(month_key=month_key_expr)
+            .values('month_key', 'product_id', 'product__name')
+            .annotate(total_revenue=Sum(revenue_expr), total_quantity=Sum('quantity'))
+            .order_by('month_key', '-total_revenue', 'product__name')
+        )
+
+        size_totals = (
+            base_queryset
+            .annotate(month_key=month_key_expr)
+            .values('month_key', 'product_id', 'size')
+            .annotate(total_quantity=Sum('quantity'))
+            .order_by('month_key', 'product_id', 'size')
+        )
+
+        month_products = defaultdict(list)
+        month_product_index = defaultdict(dict)
+
+        for row in product_totals:
+            month_key = row.get('month_key')
+            if not month_key:
+                continue
+            product_payload = {
+                'product_id': row['product_id'],
+                'product_name': row['product__name'],
+                'quantity': int(row['total_quantity'] or 0),
+                'revenue': int(row['total_revenue'] or 0),
+                'sizes': [],
+            }
+            month_products[month_key].append(product_payload)
+            month_product_index[month_key][row['product_id']] = product_payload
+
+        for row in size_totals:
+            month_key = row.get('month_key')
+            if not month_key:
+                continue
+            product_payload = month_product_index.get(month_key, {}).get(row['product_id'])
+            if not product_payload:
+                continue
+            product_payload['sizes'].append({
+                'size': row['size'] or 'N/A',
+                'quantity': int(row['total_quantity'] or 0),
+            })
+
+        months_payload = []
+        for row in monthly_totals:
+            month_key = row.get('month_key')
+            if not month_key:
+                continue
+            year, month = month_key.split('-')
+            months_payload.append({
+                'key': month_key,
+                'label': f"{month}/{year}",
+                'quantity': int(row['total_quantity'] or 0),
+                'revenue': int(row['total_revenue'] or 0),
+            })
+
+        return {
+            'months': months_payload,
+            'month_products': dict(month_products),
+        }
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['sales_chart_data'] = self._build_revenue_context()
+        return super().changelist_view(request, extra_context=extra_context)
+
 # Đăng ký mục Chính sách riêng biệt
 @admin.register(StorePolicy)
 class StorePolicyAdmin(admin.ModelAdmin):
@@ -82,3 +210,8 @@ class SaleAdmin(admin.ModelAdmin):
     list_filter = ('active',)
     filter_horizontal = ('products',)
     search_fields = ('title',)
+
+
+@admin.register(SalesReport)
+class SalesReportProxyAdmin(SalesReportAdmin):
+    pass

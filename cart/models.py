@@ -9,6 +9,10 @@ class Cart(models.Model):
     def __str__(self):
         return f"Cart {self.id} - {self.user.username if self.user else 'Guest'}"
 
+    class Meta:
+        verbose_name = "Giỏ hàng"
+        verbose_name_plural = "Giỏ hàng"
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -17,3 +21,7 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
+
+    class Meta:
+        verbose_name = "Sản phẩm trong giỏ"
+        verbose_name_plural = "Sản phẩm trong giỏ"

@@ -1,8 +1,9 @@
-from rest_framework import viewsets, serializers
-from .models import Brand, Category, Size, Product, ProductImage, Review, StorePolicy
+from rest_framework import viewsets
+from .models import Brand, Category, Size, Product, ProductImage, Review, StorePolicy, Sale
 from .serializers import (
     BrandSerializer, CategorySerializer, SizeSerializer,
     ProductSerializer, ProductImageSerializer, ReviewSerializer,
+    StorePolicySerializer, SaleSerializer,
     )
 
 
@@ -38,10 +39,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class StorePolicyViewSet(viewsets.ModelViewSet):
     queryset = StorePolicy.objects.all()
-    # Reuse a simple serializer
-    class SimpleStorePolicySerializer(serializers.ModelSerializer):
-        class Meta:
-            model = StorePolicy
-            fields = ['id', 'title', 'payment_policy', 'return_policy']
+    serializer_class = StorePolicySerializer
 
-    serializer_class = SimpleStorePolicySerializer
+
+class SaleViewSet(viewsets.ModelViewSet):
+    queryset = Sale.objects.all().order_by('-start_date')
+    serializer_class = SaleSerializer

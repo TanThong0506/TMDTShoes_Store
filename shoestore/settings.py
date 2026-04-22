@@ -222,6 +222,7 @@ JAZZMIN_SETTINGS = {
     # 2. Thanh Menu Top (Thêm nút bấm nhanh)
     "topmenu_links": [
         {"name": "Xem trang web",  "url": "/", "new_window": True}, # Click là mở sang trang khách hàng
+        {"name": "Báo cáo doanh thu", "url": "/admin/products/salesreport/revenue-report/", "new_window": False},
         {"model": "auth.User"},
     ],
 
