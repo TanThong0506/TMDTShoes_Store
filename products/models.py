@@ -6,6 +6,10 @@ class Brand(models.Model):
     logo = models.ImageField(upload_to='brands/', blank=True, null=True) 
     description = models.TextField(blank=True, null=True) 
 
+    class Meta:
+        verbose_name = "Thương hiệu"
+        verbose_name_plural = "Thương hiệu"
+
     def __str__(self):
         return self.name
 
@@ -13,6 +17,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     
     class Meta:
+        verbose_name = "Loại sản phẩm"
         verbose_name_plural = "Loại sản phẩm" 
         
     def __str__(self):
@@ -20,6 +25,10 @@ class Category(models.Model):
 
 class Size(models.Model):
     value = models.CharField(max_length=10, unique=True) 
+
+    class Meta:
+        verbose_name = "Kích cỡ"
+        verbose_name_plural = "Kích cỡ"
     
     def __str__(self):
         return self.value
@@ -101,6 +110,10 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "Sản phẩm"
+        verbose_name_plural = "Sản phẩm"
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(
@@ -112,12 +125,20 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+    class Meta:
+        verbose_name = "Ảnh sản phẩm"
+        verbose_name_plural = "Ảnh sản phẩm"
     
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Đánh giá"
+        verbose_name_plural = "Đánh giá"
 
 # --- MODEL QUẢN LÝ CHÍNH SÁCH RIÊNG ---
 class StorePolicy(models.Model):
@@ -127,6 +148,10 @@ class StorePolicy(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        verbose_name = "Chính sách cửa hàng"
+        verbose_name_plural = "Chính sách cửa hàng"
 
 class Sale(models.Model):
     title = models.CharField(max_length=120, default='Flash Sale', verbose_name='Tiêu đề chương trình')
@@ -143,9 +168,9 @@ class Sale(models.Model):
     def __str__(self):
         return f"{self.title} ({self.start_date.date()} - {self.end_date.date()})"
 
-    class Meta:
-        verbose_name = "Chính sách cửa hàng"
-        verbose_name_plural = "Chính sách cửa hàng"
 
-    def __str__(self):
-        return self.title
+class SalesReport(Product):
+    class Meta:
+        proxy = True
+        verbose_name = "Báo cáo doanh thu"
+        verbose_name_plural = "Báo cáo doanh thu"

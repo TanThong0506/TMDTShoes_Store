@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Brand, Category, Size, Product, ProductImage, Review, StorePolicy
+from .models import Brand, Category, Size, Product, ProductImage, Review, StorePolicy, Sale
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -56,3 +56,18 @@ class ProductSerializer(serializers.ModelSerializer):
         if sizes:
             product.sizes.set(sizes)
         return product
+
+
+class StorePolicySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorePolicy
+        fields = ['id', 'title', 'payment_policy', 'return_policy']
+
+
+class SaleSerializer(serializers.ModelSerializer):
+    products = serializers.PrimaryKeyRelatedField(many=True, queryset=Product.objects.all())
+
+    class Meta:
+        model = Sale
+        fields = ['id', 'title', 'products', 'start_date', 'end_date', 'active', 'created_at']
+        read_only_fields = ['created_at']
