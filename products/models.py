@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 
+# --- BRANDS ---
 class Brand(models.Model):
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='brands/', blank=True, null=True) 
@@ -13,6 +15,7 @@ class Brand(models.Model):
     def __str__(self):
         return self.name
 
+# --- CATEGORIES ---
 class Category(models.Model):
     name = models.CharField(max_length=100)
     
@@ -23,6 +26,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+# --- SIZES ---
 class Size(models.Model):
     value = models.CharField(max_length=10, unique=True) 
 
@@ -33,15 +37,13 @@ class Size(models.Model):
     def __str__(self):
         return self.value
 
+# --- PRODUCT ---
 class Product(models.Model):
     name = models.CharField(max_length=200)
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # Chọn được nhiều Loại sản phẩm cùng lúc
     category = models.ManyToManyField(Category, blank=True, verbose_name="Loại sản phẩm")
     sizes = models.ManyToManyField(Size) 
     
-    # Giá tiền nhập bằng phím tự do
     price = models.IntegerField(
         validators=[MinValueValidator(0)], 
         verbose_name="Giá hiện tại"
@@ -53,8 +55,6 @@ class Product(models.Model):
     )
     
     description = models.TextField(blank=True) 
-    
-    # Cho phép chọn nhiều định dạng ảnh khác nhau
     image = models.ImageField(
         upload_to='product_images/',
         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'])],
@@ -63,43 +63,27 @@ class Product(models.Model):
     
     stock = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
     is_active = models.BooleanField(default=True, verbose_name="Đang kinh doanh")
-    
-    # Giữ lại trong Model để không lỗi DB nhưng ẩn ở Admin
-    payment_policy = models.TextField(blank=True, verbose_name="Chính sách thanh toán")
-    return_policy = models.TextField(blank=True, verbose_name="Chính sách đổi trả")
-
     stock_status = models.BooleanField(default=True) 
 
-    # Percent discount specifically for this product (0-100). If set, used to compute discounted price.
     discount_percent = models.PositiveSmallIntegerField(
         null=True, blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         verbose_name="Phần trăm giảm giá"
     )
 
-    # Hàm tiện ích kiểm tra giảm giá
     @property
     def is_on_sale(self):
         return bool(self.old_price and self.old_price > self.price)
 
-    # --- HÀM TÍNH % ĐÃ ĐƯỢC BỔ SUNG VÀO ĐÂY ---
     def get_sale_percent(self):
-        # If explicit discount_percent set on product, prefer it
         if self.discount_percent:
             return int(self.discount_percent)
-
         if self.old_price and self.old_price > self.price:
             percent = ((self.old_price - self.price) / self.old_price) * 100
             return int(percent)
         return 0
 
     def get_discounted_price(self):
-        """Return computed discounted price according to `discount_percent` or `old_price`/`price` pair.
-
-        Priority:
-        - If `discount_percent` is set -> apply to `old_price` if available else to `price`.
-        - Else return `price` (already discounted) or compute from `old_price` if present.
-        """
         percent = self.get_sale_percent()
         if percent and percent > 0:
             base = self.old_price if self.old_price else self.price
@@ -114,6 +98,8 @@ class Product(models.Model):
         verbose_name = "Sản phẩm"
         verbose_name_plural = "Sản phẩm"
 
+
+# --- PRODUCT IMAGES (EXTRA) ---
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(
@@ -129,30 +115,46 @@ class ProductImage(models.Model):
     class Meta:
         verbose_name = "Ảnh sản phẩm"
         verbose_name_plural = "Ảnh sản phẩm"
-    
+
+
+# --- REVIEWS ---
 class Review(models.Model):
+    RATING_CHOICES = (
+        (1, '1 sao'),
+        (2, '2 sao'),
+        (3, '3 sao'),
+        (4, '4 sao'),
+        (5, '5 sao'),
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    comment = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=RATING_CHOICES, default=5, verbose_name="Số sao")
+    comment = models.TextField(verbose_name="Nội dung đánh giá")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        ordering = ['-created_at']
         verbose_name = "Đánh giá"
         verbose_name_plural = "Đánh giá"
 
-# --- MODEL QUẢN LÝ CHÍNH SÁCH RIÊNG ---
+    def __str__(self):
+        return f"{self.user.username} đánh giá {self.product.name} - {self.rating} sao"
+
+
+    # --- POLICIES ---
 class StorePolicy(models.Model):
     title = models.CharField(max_length=100, default="Cấu hình chính sách chung", verbose_name="Tên cấu hình")
     payment_policy = models.TextField(verbose_name="Nội dung Chính sách thanh toán")
     return_policy = models.TextField(verbose_name="Nội dung Chính sách đổi trả")
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         verbose_name = "Chính sách cửa hàng"
         verbose_name_plural = "Chính sách cửa hàng"
 
+    def __str__(self):
+        return self.title
+
+# --- SALES/PROMOTIONS ---
 class Sale(models.Model):
     title = models.CharField(max_length=120, default='Flash Sale', verbose_name='Tiêu đề chương trình')
     products = models.ManyToManyField(Product, blank=True, related_name='sales', verbose_name='Sản phẩm tham gia')
