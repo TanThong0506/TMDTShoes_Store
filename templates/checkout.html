@@ -141,7 +141,7 @@
         event.stopPropagation(); // Ngăn không cho sự kiện lan ra ngoài
         document.querySelectorAll('.bank-card').forEach(card => card.classList.remove('active-bank'));
         element.classList.add('active-bank');
-    }
+    }   
 
     document.getElementById('btn-confirm').addEventListener('click', function() {
         const form = document.getElementById('checkout-form');
