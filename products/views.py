@@ -230,3 +230,19 @@ def request_return(request, order_id):
         else:
             messages.error(request, 'Đơn hàng này không đủ điều kiện đổi trả hoặc đã quá hạn 7 ngày.')
     return redirect('products:order_detail', order_id=order.id)
+
+@login_required
+def return_eligible_orders(request):
+    import datetime
+    from django.utils import timezone
+    now = timezone.now()
+    seven_days_ago = now - datetime.timedelta(days=7)
+    
+    # Lấy các đơn hàng trong 7 ngày gần đây (chưa bị hủy hoặc đổi)
+    eligible_orders = Order.objects.filter(
+        user=request.user, 
+        status__in=['Pending', 'Processing', 'Completed'], 
+        created_at__gte=seven_days_ago
+    ).order_by('-created_at')
+    
+    return render(request, 'return_eligible_orders.html', {'orders': eligible_orders})
