@@ -10,8 +10,14 @@
                 <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-bold">Đã bán thành công</span>
             {% elif order.status == 'Cancelled' %}
                 <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold">Đã hủy</span>
+            {% elif order.status == 'Return_Requested' %}
+                <span class="badge bg-info text-white px-3 py-2 rounded-pill fw-bold">Yêu cầu đổi/trả</span>
+            {% elif order.status == 'Returned' %}
+                <span class="badge bg-secondary text-white px-3 py-2 rounded-pill fw-bold">Đã đổi/trả</span>
+            {% elif order.status == 'Return_Denied' %}
+                <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold">Từ chối đổi/trả</span>
             {% else %}
-                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">{{ order.status }}</span>
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">{{ order.get_status_display }}</span>
             {% endif %}
         </div>
         <div class="card-body p-4">
@@ -81,13 +87,50 @@
                 <a href="{% url 'products:order_history' %}" class="btn btn-outline-dark rounded-pill px-4">
                     <i class="fas fa-chevron-left me-2"></i> Quay lại lịch sử
                 </a>
-                <button onclick="window.print()" class="btn btn-primary rounded-pill px-4">
-                    <i class="fas fa-print me-2"></i> In đơn hàng
-                </button>
+                <div>
+                    {% if order.can_return %}
+                    <button type="button" class="btn btn-warning rounded-pill px-4 me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#returnModal">
+                        <i class="fas fa-undo me-2"></i> Yêu cầu đổi/trả
+                    </button>
+                    {% endif %}
+                    <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="fas fa-print me-2"></i> In đơn hàng
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Return Modal -->
+{% if order.can_return %}
+<div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <form action="{% url 'products:request_return' order.id %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-header bg-warning border-0">
+          <h5 class="modal-title text-dark fw-bold" id="returnModalLabel"><i class="fas fa-undo me-2"></i>Yêu cầu Đổi/Trả hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-info border-0 bg-info-subtle text-info-emphasis rounded-3">
+            <i class="fas fa-info-circle me-2"></i> Chính sách đổi trả trong vòng 7 ngày kể từ ngày đặt hàng đối với các sản phẩm chưa qua sử dụng và còn nguyên tem mác.
+          </div>
+          <div class="mb-3">
+            <label for="return_reason" class="form-label fw-bold">Lý do đổi trả chi tiết <span class="text-danger">*</span></label>
+            <textarea class="form-control rounded-3" id="return_reason" name="return_reason" rows="4" required placeholder="Ví dụ: Sản phẩm bị lỗi, Size không vừa..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4 pe-4">
+          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Gửi yêu cầu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <style>
     .table img { transition: transform 0.3s ease; }

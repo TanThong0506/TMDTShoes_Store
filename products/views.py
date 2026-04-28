@@ -213,3 +213,20 @@ def order_detail(request, order_id):
     # Lấy đơn hàng đúng của người dùng đang đăng nhập, nếu không có trả về 404
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'order_detail_view.html', {'order': order})
+
+@login_required
+def request_return(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    if request.method == 'POST':
+        if order.can_return:
+            reason = request.POST.get('return_reason', '').strip()
+            if not reason:
+                messages.error(request, 'Vui lòng nhập lý do đổi trả.')
+            else:
+                order.status = 'Return_Requested'
+                order.return_reason = reason
+                order.save()
+                messages.success(request, 'Đã gửi yêu cầu đổi/trả hàng. Shop sẽ liên hệ với bạn trong thời gian sớm nhất.')
+        else:
+            messages.error(request, 'Đơn hàng này không đủ điều kiện đổi trả hoặc đã quá hạn 7 ngày.')
+    return redirect('products:order_detail', order_id=order.id)

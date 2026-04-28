@@ -22,4 +22,5 @@ class OrderAdmin(admin.ModelAdmin):
     list_editable = ['status'] 
     
     search_fields = ['full_name', 'phone']
+    readonly_fields = ['return_reason']
     inlines = [OrderItemInline]
