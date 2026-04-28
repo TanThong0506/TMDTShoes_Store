@@ -11,7 +11,7 @@ skinparam actor {
     BorderColor #0056b3
 }
 
-' Cập nhật ngày 27/04/2026 (điểm danh)
+
 title Sơ đồ Use Case Hệ thống Cửa hàng Giày TMDTShoes_Store
 
 left to right direction
@@ -41,6 +41,7 @@ rectangle "Hệ thống TMDTShoes_Store" {
         usecase "Quản lý giỏ hàng" as UC_ManageCart
         usecase "Đặt hàng & Thanh toán" as UC_Checkout
         usecase "Đánh giá sản phẩm (Review)" as UC_Review
+        usecase "Yêu cầu đổi/trả (7 ngày)" as UC_Return
     }
 
     ' --- Nhóm 3: Thông minh nhân tạo AI ---
@@ -57,6 +58,7 @@ rectangle "Hệ thống TMDTShoes_Store" {
         usecase "Quản lý Danh mục/Hãng" as UC_AdminCategory
         usecase "Quản lý Khuyến mãi (Flash Sale)" as UC_AdminSale
         usecase "Cấu hình chính sách cửa hàng" as UC_AdminPolicy
+        usecase "Xử lý đổi/trả hàng" as UC_AdminReturn
     }
 }
 
@@ -79,6 +81,7 @@ Customer --> UC_ResetPass
 Customer --> UC_ManageCart
 Customer --> UC_Checkout
 Customer --> UC_Review
+Customer --> UC_Return
 Customer --> UC_AIAddToCart
 Customer --> UC_ChatHistory
 
@@ -88,6 +91,7 @@ Admin --> UC_AdminOrder
 Admin --> UC_AdminCategory
 Admin --> UC_AdminSale
 Admin --> UC_AdminPolicy
+Admin --> UC_AdminReturn
 Admin --> UC_Login
 
 ' AI Bot System
