@@ -10,4 +10,5 @@ urlpatterns = [
     path('order-history/', views.order_history, name='order_history'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     path('order/<int:order_id>/return/', views.request_return, name='request_return'),
+    path('return-eligible/', views.return_eligible_orders, name='return_eligible_orders'),
 ]

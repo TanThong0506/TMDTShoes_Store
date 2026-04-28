@@ -25,6 +25,7 @@ class Order(models.Model):
     def can_return(self):
         from django.utils import timezone
         import datetime
+        # Chỉ cho phép đổi trả với đơn hàng Đã giao thành công
         if self.status == 'Completed':
             now = timezone.now()
             return (now - self.created_at) <= datetime.timedelta(days=7)
