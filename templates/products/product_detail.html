@@ -1,22 +1,24 @@
 {% extends "base.html" %}
 {% load humanize %} {% block content %}
+<!-- CSS Thư viện -->
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
 
 <div class="container mt-5 bg-white p-4 rounded shadow-sm">
     <div class="row">
+        <!-- PHẦN HÌNH ẢNH SẢN PHẨM -->
         <div class="col-md-6">
             <div class="product-main-slider mb-3 border rounded overflow-hidden shadow-sm">
                 <div class="main-img-item text-center">
-                    <div class="zoom-container" style="max-height:500px; overflow:hidden;">
-                        <img src="{{ product.image.url }}" class="img-fluid w-100 zoomable" style="max-height: 500px; object-fit: cover; transition: transform 0.2s ease-out;">
+                    <div class="zoom-container">
+                        <img src="{{ product.image.url }}" class="img-fluid w-100 zoomable">
                     </div>
                 </div>
                 {% for p_img in product.images.all %}
                 <div class="main-img-item text-center">
-                    <div class="zoom-container" style="max-height:500px; overflow:hidden;">
-                        <img src="{{ p_img.image.url }}" class="img-fluid w-100 zoomable" style="max-height: 500px; object-fit: cover; transition: transform 0.2s ease-out;">
+                    <div class="zoom-container">
+                        <img src="{{ p_img.image.url }}" class="img-fluid w-100 zoomable">
                     </div>
                 </div>
                 {% endfor %}
@@ -24,42 +26,33 @@
 
             <div class="product-thumb-slider px-4">
                 <div class="thumb-item px-1">
-                    <img src="{{ product.image.url }}" class="img-thumbnail" style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                    <img src="{{ product.image.url }}" class="img-thumbnail thumb-img">
                 </div>
                 {% for p_img in product.images.all %}
                 <div class="thumb-item px-1">
-                    <img src="{{ p_img.image.url }}" class="img-thumbnail" style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                    <img src="{{ p_img.image.url }}" class="img-thumbnail thumb-img">
                 </div>
                 {% endfor %}
             </div>
         </div>
 
+        <!-- PHẦN THÔNG TIN CHI TIẾT -->
         <div class="col-md-6">
             <nav class="small text-muted mb-2">Trang chủ / {{ product.category.name }} / {{ product.name }}</nav>
             <h1 class="fw-bold h2 mb-1">{{ product.name }} 
-                {% if product.stock_status %}
-                    <span class="badge bg-success" style="font-size: 0.4em; vertical-align: middle;">Còn Hàng</span>
-                {% else %}
-                    <span class="badge bg-danger" style="font-size: 0.4em; vertical-align: middle;">Hết Hàng</span>
-                {% endif %}
+                {% if product.stock_status %}<span class="badge bg-success status-badge">Còn Hàng</span>
+                {% else %}<span class="badge bg-danger status-badge">Hết Hàng</span>{% endif %}
             </h1>
             <p class="text-primary small mb-3"><i class="fas fa-check-circle"></i> Cam kết Authentic 100%</p>
 
             <div class="d-flex align-items-center mb-4">
                 {% with percent=product.get_sale_percent %}
-                    {% if percent and percent > 0 %}
+                    {% if percent > 0 %}
                         <span class="badge bg-danger me-2">-{{ percent }}%</span>
                         <span class="text-danger fs-2 fw-bold">{{ product.get_discounted_price|intcomma }}₫</span>
-                        {% if product.old_price %}
-                            <del class="text-muted ms-3 fs-5">{{ product.old_price|intcomma }}₫</del>
-                        {% else %}
-                            <del class="text-muted ms-3 fs-5">{{ product.price|intcomma }}₫</del>
-                        {% endif %}
+                        <del class="text-muted ms-3 fs-5">{% if product.old_price %}{{ product.old_price|intcomma }}{% else %}{{ product.price|intcomma }}{% endif %}₫</del>
                     {% else %}
                         <span class="text-danger fs-2 fw-bold">{{ product.price|intcomma }}₫</span>
-                        {% if product.old_price %}
-                            <del class="text-muted ms-3 fs-5">{{ product.old_price|intcomma }}₫</del>
-                        {% endif %}
                     {% endif %}
                 {% endwith %}
             </div>
@@ -67,9 +60,8 @@
             <form id="add-to-cart-form" method="POST" action="{% url 'cart:cart_add' product.id %}">
                 {% csrf_token %}
                 <div class="mb-4">
-                    <p class="fw-bold mb-2">
-                        Kích thước (Size): 
-                        <a href="javascript:void(0);" class="text-muted small fw-normal ms-2 text-decoration-underline" data-bs-toggle="modal" data-bs-target="#sizeGuideModal">
+                    <p class="fw-bold mb-2">Kích thước (Size): 
+                        <a href="#" class="text-muted small fw-normal ms-2 underline" data-bs-toggle="modal" data-bs-target="#sizeGuideModal">
                             <i class="fas fa-ruler-combined"></i> Hướng dẫn chọn size
                         </a>
                     </p>
@@ -84,7 +76,7 @@
                 <div class="row g-2 mb-4">
                     <div class="col-3 text-center">
                         <label class="small text-muted mb-1">Số lượng</label>
-                        <input type="number" name="quantity" class="form-control py-2 text-center" value="1" min="1">
+                        <input type="number" name="quantity" class="form-control text-center" value="1" min="1">
                     </div>
                     <div class="col-9 d-flex align-items-end">
                         <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase shadow-sm">THÊM VÀO GIỎ HÀNG</button>
@@ -96,79 +88,39 @@
 
             <div class="row text-center mt-4">
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto border-danger text-danger">
-                        <span class="icon-badge bg-danger">x2</span>
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Double Box đóng gói</p>
+                    <div class="icon-wrapper mx-auto border-danger text-danger"><span class="icon-badge bg-danger">x2</span><i class="fas fa-box"></i></div>
+                    <p class="mt-2 policy-text">Double Box đóng gói</p>
                 </div>
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto border-warning text-warning">
-                        <span class="icon-badge bg-warning">7</span>
-                        <i class="fas fa-sync-alt"></i>
-                    </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">07 ngày đổi hàng</p>
+                    <div class="icon-wrapper mx-auto border-warning text-warning"><span class="icon-badge bg-warning">7</span><i class="fas fa-sync-alt"></i></div>
+                    <p class="mt-2 policy-text">07 ngày đổi hàng</p>
                 </div>
                 <div class="col-4">
-                    <div class="icon-wrapper mx-auto border-info text-info">
-                        <span class="icon-badge bg-info"><i class="fas fa-bolt" style="font-size: 10px;"></i></span>
-                        <i class="fas fa-shipping-fast"></i>
-                    </div>
-                    <p class="mt-2 fw-bold mb-0" style="font-size: 11px;">Giao hàng siêu tốc</p>
+                    <div class="icon-wrapper mx-auto border-info text-info"><span class="icon-badge bg-info"><i class="fas fa-bolt"></i></span><i class="fas fa-shipping-fast"></i></div>
+                    <p class="mt-2 policy-text">Giao hàng siêu tốc</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- TABS MÔ TẢ -->
     <div class="mt-5 pt-4 border-top">
-        <ul class="nav nav-tabs border-0" id="productDetailTab" role="tablist">
+        <ul class="nav nav-tabs border-0" id="productDetailTab">
             <li class="nav-item">
-                <button class="nav-link active fw-bold text-uppercase text-dark" id="mota-tab" data-bs-toggle="tab" data-bs-target="#mota" type="button" role="tab">Mô tả sản phẩm</button>
+                <button class="nav-link active fw-bold text-uppercase text-dark" id="mota-tab" data-bs-toggle="tab" data-bs-target="#mota">Mô tả sản phẩm</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold text-uppercase text-dark" id="thanh-toan-tab" data-bs-toggle="tab" data-bs-target="#thanh-toan" type="button" role="tab">Thanh toán</button>
+                <button class="nav-link fw-bold text-uppercase text-dark" id="thanh-toan-tab" data-bs-toggle="tab" data-bs-target="#thanh-toan">Thanh toán</button>
             </li>
         </ul>
-
-        <div class="tab-content p-4 bg-light rounded shadow-sm mb-5" id="productDetailTabContent">
-            <div class="tab-pane fade show active" id="mota" role="tabpanel">
-                <div style="white-space: pre-line; line-height: 1.6;">{{ product.description }}</div>
-            </div>
-            <div class="tab-pane fade" id="thanh-toan" role="tabpanel">
-                <div style="white-space: pre-line;">
-                    {% if policy %}{{ policy.payment_policy }}{% else %}Nội dung đang được cập nhật...{% endif %}
-                </div>
-            </div>
+        <div class="tab-content p-4 bg-light rounded shadow-sm mb-5">
+            <div class="tab-pane fade show active" id="mota">{{ product.description|linebreaks }}</div>
+            <div class="tab-pane fade" id="thanh-toan">{% if policy %}{{ policy.payment_policy|linebreaks }}{% else %}Đang cập nhật...{% endif %}</div>
         </div>
     </div>
 </div>
 
-{% if recommended_products %}
-<section class="recommended-section bg-white py-5">
-    <div class="container">
-        <h4 class="fw-bold mb-3 text-center">Sản phẩm đề cử cho bạn</h4>
-        <div class="row">
-            {% for rp in recommended_products %}
-            <div class="col-6 col-md-3 mb-4">
-                <a href="{% url 'products:product_detail' rp.id %}" class="text-decoration-none text-dark d-block">
-                    <div class="card h-100 shadow-sm border-0 list-product-card">
-                        <div class="overflow-hidden position-relative" style="height:200px;">
-                            <img src="{{ rp.image.url }}" class="card-img-top object-fit-cover" style="width:100%; height:200px;">
-                        </div>
-                        <div class="card-body p-2 text-center">
-                            <p class="small text-muted mb-1">{% if rp.brand %}{{ rp.brand.name }}{% endif %}</p>
-                            <h6 class="mb-1 small fw-bold" style="height:34px; overflow:hidden">{{ rp.name }}</h6>
-                            <div class="text-danger fw-bold small">{{ rp.price|intcomma }}₫</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
+<!-- ĐÁNH GIÁ SẢN PHẨM -->
 <section id="reviews-section" class="py-5 bg-light border-top">
     <div class="container">
         <div class="row">
@@ -177,33 +129,49 @@
                 
                 <div class="review-list mb-5">
                     {% for review in reviews %}
-                    <div class="card border-0 shadow-sm mb-3 p-3">
+                    <div class="card border-0 shadow-sm mb-3 p-3 position-relative">
                         <div class="d-flex align-items-center mb-2">
                             <div class="avatar-circle me-2">{{ review.user.username|slice:":1"|upper }}</div>
-                            <div>
+                            <div class="flex-grow-1">
                                 <h6 class="mb-0 fw-bold">{{ review.user.username }}</h6>
                                 <div class="text-warning small">
-                                    {% for i in "12345" %}
-                                        <i class="{% if forloop.counter <= review.rating %}fas{% else %}far{% endif %} fa-star"></i>
-                                    {% endfor %}
+                                    {% for i in "12345" %}<i class="{% if forloop.counter <= review.rating %}fas{% else %}far{% endif %} fa-star"></i>{% endfor %}
                                 </div>
                             </div>
-                            <small class="ms-auto text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+                            
+                            <!-- MENU 3 CHẤM (SỬA/XÓA) -->
+                            {% if user.is_authenticated and review.user == user %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                    <li><a class="dropdown-item small edit-review-btn" href="javascript:void(0);" 
+                                           data-id="{{ review.id }}" data-rating="{{ review.rating }}" data-comment="{{ review.comment|escapejs }}">
+                                        <i class="fas fa-edit me-2"></i>Chỉnh sửa</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item small text-danger delete-review-trigger" href="javascript:void(0);" 
+                                           data-url="{% url 'products:delete_review' review.id %}">
+                                        <i class="fas fa-trash-alt me-2"></i>Xóa đánh giá</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            <small class="ms-2 text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
                         </div>
                         <p class="mb-0 text-secondary">{{ review.comment }}</p>
                     </div>
                     {% empty %}
-                    <div class="text-center py-4 text-muted italic">Chưa có đánh giá nào. Hãy là người đầu tiên!</div>
+                    <p class="text-center text-muted italic">Chưa có đánh giá nào.</p>
                     {% endfor %}
                 </div>
 
+                <!-- FORM ĐÁNH GIÁ MỚI -->
                 {% if user.is_authenticated %}
                 <div class="card border-0 shadow-sm p-4 rounded-3">
                     <h5 class="fw-bold mb-3">Để lại đánh giá của bạn</h5>
                     <form method="POST" action="{% url 'products:product_detail' product.id %}">
                         {% csrf_token %}
                         <div class="mb-3 text-center">
-                            <label class="form-label d-block fw-bold">Chọn số sao:</label>
                             <div class="star-rating d-flex justify-content-center flex-row-reverse">
                                 <input type="radio" id="star5" name="rating" value="5" required/><label for="star5"><i class="fas fa-star"></i></label>
                                 <input type="radio" id="star4" name="rating" value="4"/><label for="star4"><i class="fas fa-star"></i></label>
@@ -212,15 +180,9 @@
                                 <input type="radio" id="star1" name="rating" value="1"/><label for="star1"><i class="fas fa-star"></i></label>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <textarea name="comment" class="form-control" rows="3" placeholder="Bạn thấy sản phẩm này thế nào?" required></textarea>
-                        </div>
+                        <textarea name="comment" class="form-control mb-3" rows="3" placeholder="Nam thấy sản phẩm này thế nào?" required></textarea>
                         <button type="submit" class="btn btn-dark w-100 fw-bold">GỬI ĐÁNH GIÁ</button>
                     </form>
-                </div>
-                {% else %}
-                <div class="alert alert-secondary text-center small">
-                    Vui lòng <a href="{% url 'users:login' %}" class="fw-bold">đăng nhập</a> để gửi đánh giá.
                 </div>
                 {% endif %}
             </div>
@@ -228,134 +190,107 @@
     </div>
 </section>
 
+<!-- MODAL SỬA ĐÁNH GIÁ -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{% url 'products:edit_review' %}" class="modal-content border-0 shadow">
+            {% csrf_token %}
+            <input type="hidden" name="review_id" id="edit_review_id">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">Chỉnh sửa đánh giá</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 text-center">
+                    <div class="star-rating d-flex justify-content-center flex-row-reverse">
+                        <input type="radio" id="edit_star5" name="rating" value="5"/><label for="edit_star5"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="edit_star4" name="rating" value="4"/><label for="edit_star4"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="edit_star3" name="rating" value="3"/><label for="edit_star3"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="edit_star2" name="rating" value="2"/><label for="edit_star2"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="edit_star1" name="rating" value="1"/><label for="edit_star1"><i class="fas fa-star"></i></label>
+                    </div>
+                </div>
+                <textarea name="comment" id="edit_comment" class="form-control" rows="4" required></textarea>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-dark w-100 fw-bold">CẬP NHẬT</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL XÁC NHẬN XÓA (NẰM GIỮA MÀN HÌNH) -->
+<div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center pt-5 pb-4">
+                <div class="text-danger mb-3"><i class="fas fa-exclamation-circle fa-4x"></i></div>
+                <h5 class="fw-bold">Xác nhận xóa</h5>
+                <p class="text-muted px-3">Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer border-0 d-flex justify-content-center pb-4">
+                <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">HỦY</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger px-4 fw-bold">XÓA NGAY</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS TRANG TRÍ -->
 <style>
-    /* CSS CHO STAR RATING */
-    .star-rating { display: inline-block; }
-    .star-rating input { display: none; }
     .star-rating label { font-size: 28px; color: #ccc; cursor: pointer; padding: 0 4px; transition: 0.2s; }
-    .star-rating input:checked ~ label,
-    .star-rating label:hover,
-    .star-rating label:hover ~ label { color: #ffc107; }
-
-    .avatar-circle {
-        width: 35px; height: 35px; background: #212529; color: #fff;
-        border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;
-    }
-
-    /* CSS GỐC CỦA BẠN */
-    .list-product-card { 
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        border-radius: 12px;
-    }
-    .list-product-card:hover { 
-        transform: translateY(-8px); 
-        box-shadow: 0 15px 30px rgba(0,0,0,0.12) !important; 
-    }
-    .list-product-card img { transition: transform 0.6s ease; }
-    .list-product-card:hover img { transform: scale(1.08); }
-    .object-fit-cover { object-fit: cover; }
-    .icon-wrapper {
-        width: 65px; height: 65px;
-        border: 2px solid; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        position: relative; font-size: 26px; transition: 0.3s;
-    }
-    .icon-wrapper:hover { transform: scale(1.1); }
-    .icon-badge {
-        position: absolute; top: -5px; left: -5px;
-        color: white; width: 22px; height: 22px; border-radius: 50%;
-        font-size: 10px; font-weight: bold;
-        display: flex; align-items: center; justify-content: center;
-        border: 2px solid #fff;
-    }
-    .btn-check:checked + .btn-outline-dark { background-color: #000 !important; color: #fff !important; }
-    .nav-tabs .nav-link { border: none; padding: 12px 25px; }
-    .nav-tabs .nav-link.active { border-bottom: 4px solid #000 !important; background: #f8f9fa !important; }
+    .star-rating input { display: none; }
+    .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #ffc107 !important; }
+    .avatar-circle { width: 35px; height: 35px; background: #212529; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
     .zoom-container { position: relative; width: 100%; height: 500px; overflow: hidden; cursor: zoom-in; }
-    .zoom-container .zoomable {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        object-fit: contain !important; max-width: none !important; max-height: none !important;
-        transform-origin: center center; transition: transform 0.15s ease-out;
-    }
-    .product-main-slider, .product-thumb-slider { -webkit-transform: translateZ(0); transform: translateZ(0); }
+    .zoomable { width: 100%; height: 100%; object-fit: contain; transition: transform 0.15s ease-out; }
+    .thumb-img { height: 80px; width: 100%; object-fit: cover; cursor: pointer; }
+    .icon-wrapper { width: 65px; height: 65px; border: 2px solid; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; font-size: 26px; }
+    .icon-badge { position: absolute; top: -5px; left: -5px; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+    .status-badge { font-size: 0.4em; vertical-align: middle; }
+    .policy-text { font-size: 11px; font-weight: bold; margin-bottom: 0; }
+    .underline { text-decoration: underline; }
 </style>
 
-<div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-hidden="true">
-    </div>
-
+<!-- SCRIPTS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
 
 <script>
     $(document).ready(function() {
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
+        // XỬ LÝ MODAL SỬA
+        $('.edit-review-btn').on('click', function() {
+            const id = $(this).data('id');
+            const rating = $(this).data('rating');
+            const comment = $(this).data('comment');
+            $('#edit_review_id').val(id);
+            $('#edit_comment').val(comment);
+            $(`#edit_star${rating}`).prop('checked', true);
+            new bootstrap.Modal(document.getElementById('editReviewModal')).show();
+        });
 
+        // XỬ LÝ MODAL XÓA (NẰM GIỮA)
+        $('.delete-review-trigger').on('click', function() {
+            const deleteUrl = $(this).data('url');
+            $('#confirmDeleteBtn').attr('href', deleteUrl);
+            new bootstrap.Modal(document.getElementById('deleteReviewModal')).show();
+        });
+
+        // SLICK SLIDER
         $('.product-main-slider').slick({ slidesToShow: 1, arrows: false, fade: true });
+        $('.product-thumb-slider').slick({ slidesToShow: 4, infinite: false, prevArrow: '<button class="slick-prev"><i class="fas fa-chevron-left"></i></button>', nextArrow: '<button class="slick-next"><i class="fas fa-chevron-right"></i></button>' });
+        $('.product-thumb-slider').on('mouseenter', '.slick-slide', function() { $('.product-main-slider').slick('slickGoTo', $(this).data('slick-index')); });
 
-        $('.product-thumb-slider').slick({
-            slidesToShow: 4, 
-            infinite: false,        
-            autoplay: false,        
-            prevArrow: '<button type="button" class="slick-prev shadow-sm"><i class="fas fa-chevron-left text-dark"></i></button>',
-            nextArrow: '<button type="button" class="slick-next shadow-sm"><i class="fas fa-chevron-right text-dark"></i></button>',
-        });
-
-        $('.product-thumb-slider').on('mouseenter', '.slick-slide', function() {
-            if (window.innerWidth >= 768) {
-                var realIndex = $(this).attr('data-slick-index');
-                $('.product-main-slider').slick('slickGoTo', realIndex, true); 
-            }
-        });
-
-        function enableZoom() {
-            if (window.innerWidth < 768) return; 
-            $('.zoom-container').each(function() {
-                var container = $(this);
-                var img = container.find('.zoomable');
-                container.off('mousemove.zoom').on('mousemove.zoom', function(e) {
-                    var offset = container.offset();
-                    var x = e.pageX - offset.left;
-                    var y = e.pageY - offset.top;
-                    var px = x / container.width() * 100;
-                    var py = y / container.height() * 100;
-                    img.css({'transform-origin': px + '% ' + py + '%', 'transform': 'scale(1.8)'});
-                });
-                container.on('mouseleave.zoom', function() { img.css('transform', 'scale(1)'); });
-            });
-        }
-        
-        enableZoom();
-        $(window).on('resize', enableZoom);
-
-        $('#add-to-cart-form').on('submit', function(e) {
-            e.preventDefault(); 
-            var form = $(this);
-            $.ajax({
-                type: "POST",
-                url: form.attr('action'),
-                data: form.serialize(),
-                headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                success: function(response) {
-                    if (response.cart_count !== undefined) $('.cart-count').text(response.cart_count);
-                    var btn = form.find('button[type="submit"]');
-                    btn.text('ĐÃ THÊM!').addClass('btn-success').removeClass('btn-dark');
-                    setTimeout(function() { btn.text('THÊM VÀO GIỎ HÀNG').addClass('btn-dark').removeClass('btn-success'); }, 2000);
-                }
-            });
-        });
+        // ZOOM ẢNH
+        $('.zoom-container').on('mousemove', function(e) {
+            if (window.innerWidth < 768) return;
+            const container = $(this);
+            const img = container.find('.zoomable');
+            const offset = container.offset();
+            const x = ((e.pageX - offset.left) / container.width()) * 100;
+            const y = ((e.pageY - offset.top) / container.height()) * 100;
+            img.css({'transform-origin': `${x}% ${y}%`, 'transform': 'scale(2)'});
+        }).on('mouseleave', function() { $(this).find('.zoomable').css('transform', 'scale(1)'); });
     });
 </script>
 {% endblock %}
