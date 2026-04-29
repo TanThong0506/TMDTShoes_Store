@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
+from django.db.models import Avg
 
 # --- BRANDS ---
 class Brand(models.Model):
@@ -62,6 +63,7 @@ class Product(models.Model):
         verbose_name="Phần trăm giảm giá"
     )
 
+    # --- LOGIC GIÁ VÀ GIẢM GIÁ ---
     @property
     def is_on_sale(self):
         return bool(self.old_price and self.old_price > self.price)
@@ -81,6 +83,24 @@ class Product(models.Model):
             discounted = int(base * (100 - percent) / 100)
             return max(discounted, 0)
         return self.price
+
+    # --- LOGIC ĐÁNH GIÁ (MỚI THÊM) ---
+    def get_average_rating(self):
+        """Tính điểm trung bình sao dựa trên các Review"""
+        avg = self.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 1) if avg is not None else 5.0
+
+    def get_rating_count(self):
+        """Trả về tổng số lượt đánh giá"""
+        return self.reviews.count()
+
+    # --- LOGIC SẢN PHẨM GỢI Ý (MỚI THÊM) ---
+    def get_recommended(self):
+        """Lấy 4 sản phẩm cùng Category ngẫu nhiên (trừ sản phẩm hiện tại)"""
+        return Product.objects.filter(
+            category__in=self.category.all(),
+            is_active=True
+        ).exclude(id=self.id).distinct().order_by('?')[:4]
 
     def __str__(self):
         return self.name

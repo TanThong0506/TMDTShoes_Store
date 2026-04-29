@@ -3,9 +3,10 @@ import json
 import logging
 import re
 import traceback
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg  # Thêm để tính trung bình sao
 from dotenv import load_dotenv
 
 # SỬ DỤNG THƯ VIỆN GROQ (SIÊU NHANH & MIỄN PHÍ)
@@ -39,6 +40,47 @@ def home(request):
         'latest_products': latest_products
     }
     return render(request, 'home.html', context)
+
+# --- HÀM MỚI CHÈN THÊM ĐỂ XỬ LÝ CHI TIẾT SẢN PHẨM & ĐÁNH GIÁ ---
+def product_detail(request, id):
+    product = get_object_or_404(Product, id=id)
+    reviews = product.reviews.all().order_by('-created_at')
+    
+    # Tính điểm trung bình thập phân (Ví dụ: 2.8)
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    # Đếm số lượng từng loại sao để truyền vào các nút lọc (Fix lỗi hiện số 0)
+    count_5 = reviews.filter(rating=5).count()
+    count_4 = reviews.filter(rating=4).count()
+    count_3 = reviews.filter(rating=3).count()
+    count_2 = reviews.filter(rating=2).count()
+    count_1 = reviews.filter(rating=1).count()
+    
+    # Xử lý khi người dùng gửi form đánh giá
+    if request.method == "POST" and request.user.is_authenticated:
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment')
+        if rating and comment:
+            product.reviews.create(
+                user=request.user,
+                rating=rating,
+                comment=comment
+            )
+            return redirect('products:product_detail', id=product.id)
+
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'average_rating': average_rating,
+        'count_5': count_5,
+        'count_4': count_4,
+        'count_3': count_3,
+        'count_2': count_2,
+        'count_1': count_1,
+        'recommended_products': Product.objects.filter(category=product.category).exclude(id=id)[:4]
+    }
+    return render(request, 'products/product_detail.html', context)
+# -----------------------------------------------------------
 
 def help_page(request):
     return render(request, 'help.html')

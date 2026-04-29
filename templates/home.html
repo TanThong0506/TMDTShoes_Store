@@ -2,6 +2,7 @@
 {% load humanize %} 
 
 {% block content %}
+<!-- Banner Hero -->
 <div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
      style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
     <div class="container text-center">
@@ -11,212 +12,165 @@
     </div>
 </div>
 
+<!-- SECTION: DEAL ĐANG CHÁY -->
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
+        <h3 class="fw-bold text-danger text-uppercase"><i class="fas fa-fire"></i> Deal đang cháy</h3>
         <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
     </div>
     
     <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
         {% for shoe in sale_products %}
-        <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-            <div class="card border-0 shadow-sm flex-shrink-0 home-product-card" style="width: 200px;">
-                <div class="position-relative overflow-hidden" style="border-radius: 12px 12px 0 0;">
-                    {% if shoe.is_on_sale %}
-                        <span class="position-absolute top-0 start-0 badge bg-danger m-2 z-1">-{{ shoe.get_sale_percent }}%</span>
-                    {% endif %}
-                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
+        <div class="product-card-shopee flex-shrink-0" style="width: 210px;">
+            <div class="product-img-box">
+                <a href="{% url 'products:product_detail' shoe.id %}">
+                    <img src="{{ shoe.image.url }}" alt="{{ shoe.name }}">
+                </a>
+                {% if shoe.get_sale_percent > 0 %}
+                <div class="flash-sale-badge">
+                    <div class="top-text">FLASH SALE</div>
+                    <div class="bottom-text">NỬA ĐÊM</div>
                 </div>
-                <div class="card-body p-2 text-center">
-                    <h6 class="small fw-bold text-truncate mb-1 product-title">{{ shoe.name }}</h6>
-                    <div class="mb-0 mt-1">
-                        <span class="text-danger fw-bold">{{ shoe.price|intcomma }}<u>đ</u></span>
-                        <small class="text-muted text-decoration-line-through ms-1">{{ shoe.old_price|intcomma }}<u>đ</u></small>
-                    </div>
+                {% endif %}
+            </div>
+
+            <div class="product-info">
+                <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none">
+                    <h5 class="product-name">{{ shoe.name }}</h5>
+                </a>
+
+                <!-- FIX SAO: Hiển thị đúng số sao từ database -->
+                <div class="star-rating">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= shoe.get_average_rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="fas fa-star text-secondary opacity-25"></i>
+                        {% endif %}
+                    {% endfor %}
+                    <span class="rating-avg">{{ shoe.get_average_rating|floatformat:1 }}</span>
+                </div>
+
+                <div class="price-row">
+                    <span class="old-price">{{ shoe.old_price|intcomma }}₫</span>
+                    <span class="discount-label"><i class="fas fa-bolt"></i> -{{ shoe.get_sale_percent }}%</span>
+                </div>
+
+                <div class="final-row">
+                    <span class="current-price">{{ shoe.price|intcomma }} <span class="currency">đ</span></span>
+                    <a href="{% url 'products:product_detail' shoe.id %}" class="btn-buy-now">Mua</a>
                 </div>
             </div>
-        </a>
+        </div>
         {% empty %}
         <div class="w-100 text-center py-4 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
-            <i class="fas fa-fire-extinguisher text-muted fs-2 mb-2"></i>
             <h6 class="text-muted fw-bold mb-0">Chưa có deal nào đang cháy!</h6>
-            <small class="text-muted">Bạn hãy quay lại sau để săn sale nhé.</small>
         </div>
         {% endfor %}
     </div>
 </div>
 
+<!-- SECTION: ĐỐI TÁC (FIX: Dàn hàng ngang đứng yên) -->
 <div class="mb-5 text-center">
-    <h3 class="fw-bold mb-4 text-uppercase">Danh Mục Phổ Biến</h3> 
-    
-    <div class="marquee-container">
-        <div class="marquee-track">
-            <div class="marquee-content">
-                {% for i in "1234"|make_list %}
-                    {% for brand in brands %}
-                    <div class="brand-item">
-                        <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
-                            <div class="card bg-white border border-light shadow-sm brand-card">
-                                {% if brand.logo %}
-                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
-                                {% else %}
-                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
-                                {% endif %}
-                            </div>
-                        </a>
+    <h3 class="fw-bold mb-4 text-uppercase">Đối Tác Chiến Lược</h3> 
+    <div class="container">
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3 justify-content-center">
+            {% for brand in brands %}
+            <div class="col">
+                <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
+                    <div class="card h-100 bg-white border-light shadow-sm brand-static-card">
+                        <div class="card-body d-flex align-items-center justify-content-center p-3">
+                            {% if brand.logo %}
+                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-static-img">
+                            {% else %}
+                                <span class="fw-bold text-muted small">{{ brand.name }}</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endfor %}
-                {% endfor %}
+                </a>
             </div>
-
-            <div class="marquee-content">
-                {% for i in "1234"|make_list %}
-                    {% for brand in brands %}
-                    <div class="brand-item">
-                        <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
-                            <div class="card bg-white border border-light shadow-sm brand-card">
-                                {% if brand.logo %}
-                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
-                                {% else %}
-                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
-                                {% endif %}
-                            </div>
-                        </a>
-                    </div>
-                    {% endfor %}
-                {% endfor %}
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
 
+<!-- SECTION: SẢN PHẨM MỚI -->
 <div class="mb-5">
-    <h3 class="fw-bold mb-4"><i class="fas fa-star text-warning"></i> SẢN PHẨM MỚI</h3>
+    <h3 class="fw-bold mb-4 text-uppercase"><i class="fas fa-star text-warning"></i> Sản phẩm mới</h3>
     <div class="row row-cols-2 row-cols-md-4 g-4">
         {% for shoe in latest_products %}
         <div class="col">
-            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-                <div class="card h-100 border-0 shadow-sm home-product-card">
-                    <div class="overflow-hidden" style="border-radius: 12px 12px 0 0;">
-                        <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
-                    </div>
-                    <div class="card-body">
-                        {% if shoe.brand %}
-                            <p class="text-muted small mb-1 text-uppercase">{{ shoe.brand.name }}</p>
-                        {% endif %}
-                        <h6 class="fw-bold text-truncate product-title">{{ shoe.name }}</h6>
-                        
-                        <div class="mt-2">
-                            {% if shoe.is_on_sale %}
-                                <span class="text-danger fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
-                                <small class="text-muted text-decoration-line-through ms-2">{{ shoe.old_price|intcomma }}<u>đ</u></small>
+            <div class="product-card-shopee">
+                <div class="product-img-box">
+                    <a href="{% url 'products:product_detail' shoe.id %}">
+                        <img src="{{ shoe.image.url }}" alt="{{ shoe.name }}">
+                    </a>
+                </div>
+
+                <div class="product-info">
+                    <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none">
+                        <h5 class="product-name">{{ shoe.name }}</h5>
+                    </a>
+
+                    <!-- FIX SAO: Hiển thị đúng số sao từ database -->
+                    <div class="star-rating">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= shoe.get_average_rating %}
+                                <i class="fas fa-star"></i>
                             {% else %}
-                                <span class="text-dark fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
+                                <i class="fas fa-star text-secondary opacity-25"></i>
                             {% endif %}
-                        </div>
-                        
+                        {% endfor %}
+                        <span class="rating-avg">{{ shoe.get_average_rating|floatformat:1 }}</span>
+                    </div>
+
+                    <div class="price-row">
+                        {% if shoe.old_price %}
+                            <span class="old-price">{{ shoe.old_price|intcomma }}₫</span>
+                            <span class="discount-label">-{{ shoe.get_sale_percent }}%</span>
+                        {% else %}
+                            <div style="height: 21px;"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="final-row">
+                        <span class="current-price">{{ shoe.price|intcomma }} <span class="currency">đ</span></span>
+                        <a href="{% url 'products:product_detail' shoe.id %}" class="btn-buy-now">Mua Ngay</a>
                     </div>
                 </div>
-            </a>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
-            <i class="fas fa-shoe-prints text-muted fa-3x mb-3"></i>
-            <h5 class="fw-bold text-muted">Gian hàng đang cập nhật</h5>
-            <p class="text-muted mb-0">Những mẫu giày mới nhất sẽ sớm được lên kệ. Bạn hãy đón chờ nhé!</p>
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    /* Thanh cuộn (Scrollbar) cho Deal đang cháy */
-    .custom-scroll::-webkit-scrollbar { height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    
-    /* === BỘ HIỆU ỨNG HOVER XỊN XÒ CHO SẢN PHẨM === */
-    .home-product-card { 
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        border-radius: 12px;
-    }
-    
-    /* Nổi card và đổ bóng */
-    .home-product-card:hover { 
-        transform: translateY(-8px); 
-        box-shadow: 0 15px 30px rgba(0,0,0,0.12) !important; 
-    }
-    
-    /* Zoom hình ảnh mượt mà */
-    .home-product-card img { 
-        transition: transform 0.6s ease; 
-    }
-    .home-product-card:hover img { 
-        transform: scale(1.08); 
-    }
-    
-    /* Đổi màu tiêu đề sản phẩm sang đỏ */
-    .home-product-card .product-title { 
-        transition: color 0.3s ease; 
-    }
-    .home-product-card:hover .product-title { 
-        color: #dc3545; 
-    }
-    /* ============================================== */
+    /* CSS SHOPEE STYLE */
+    .product-card-shopee { background: #fff; border-radius: 4px; overflow: hidden; border: 1px solid #f2f2f2; transition: all 0.2s; height: 100%; display: flex; flex-direction: column; }
+    .product-card-shopee:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #ee4d2d; }
+    .product-img-box { position: relative; width: 100%; padding-top: 100%; background: #f8f8f8; }
+    .product-img-box img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+    .flash-sale-badge { position: absolute; bottom: 0; left: 0; background: #113366; color: #fff; padding: 2px 8px; font-weight: bold; font-size: 10px; line-height: 1.2; z-index: 2; }
+    .flash-sale-badge .bottom-text { color: #ffcc00; }
+    .product-info { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; }
+    .product-name { font-size: 13px; color: #333; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 8px; line-height: 1.4; }
+    .star-rating { color: #ffcc00; font-size: 10px; margin-bottom: 6px; }
+    .rating-avg { color: #999; margin-left: 4px; font-size: 11px; }
+    .price-row { display: flex; align-items: center; margin-bottom: 4px; min-height: 21px; }
+    .old-price { color: #929292; text-decoration: line-through; font-size: 12px; margin-right: 6px; }
+    .discount-label { background: #fff5f1; color: #ee4d2d; border: 1px solid #ee4d2d; font-size: 10px; padding: 0 3px; border-radius: 2px; }
+    .final-row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+    .current-price { color: #ee4d2d; font-size: 18px; font-weight: 500; }
+    .currency { font-size: 12px; text-decoration: underline; }
+    .btn-buy-now { background: #ee4d2d; color: white !important; text-decoration: none; padding: 4px 12px; border-radius: 2px; font-size: 12px; }
 
-    /* --- CSS CHO BĂNG CHUYỀN CHẠY MÃI MÃI --- */
-    .marquee-container {
-        width: 100%;
-        overflow: hidden;
-        padding: 20px 0;
-        position: relative;
-    }
+    /* CSS ĐỐI TÁC MỚI */
+    .brand-static-card { transition: all 0.3s; border-radius: 8px; }
+    .brand-static-card:hover { border-color: #ee4d2d !important; transform: translateY(-3px); }
+    .brand-static-img { max-width: 100%; height: 35px; object-fit: contain; filter: grayscale(1); opacity: 0.5; transition: 0.3s; }
+    .brand-static-card:hover .brand-static-img { filter: grayscale(0); opacity: 1; }
 
-    .marquee-track {
-        display: flex; 
-        width: max-content; 
-        animation: scroll-marquee 30s linear infinite; 
-    }
-
-    .marquee-container:hover .marquee-track {
-        animation-play-state: paused; 
-    }
-
-    .marquee-content {
-        display: flex; 
-    }
-
-    .brand-item {
-        flex: 0 0 auto;
-        padding: 0 10px; 
-    }
-
-    .brand-card { 
-        width: 180px; 
-        height: 90px; 
-        border-radius: 12px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        transition: transform 0.3s ease;
-        background-color: #fff !important;
-    }
-
-    .brand-card:hover { 
-        transform: scale(1.08); 
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
-        z-index: 10;
-    }
-
-    .brand-logo-img {
-        max-width: 80%;
-        max-height: 55px;
-        object-fit: contain;
-    }
-
-    /* Hiệu ứng lặp vô tận */
-    @keyframes scroll-marquee {
-        from { transform: translateX(0); }
-        to { transform: translateX(-50%); } 
-    }
+    .custom-scroll::-webkit-scrollbar { height: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #ee4d2d; border-radius: 10px; }
 </style>
 {% endblock %}
