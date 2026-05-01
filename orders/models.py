@@ -21,8 +21,8 @@ class Order(models.Model):
         return f"Order #{self.id}"
 
     class Meta:
-        verbose_name = "Đơn hàng"
-        verbose_name_plural = "Đơn hàng"
+        verbose_name = "Đơn hàng tại shop"
+        verbose_name_plural = "Đơn hàng tại shop"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)

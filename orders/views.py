@@ -29,9 +29,10 @@ def checkout(request):
                 product = get_object_or_404(Product, id=product_id)
                 size = key.split('_')[1] if '_' in key else 'N/A'
                 
-                line_total = float(product.price) * quantity
+                line_total = int(product.price) * quantity
                 
                 display_item = {
+                    'item_key': key,
                     'product': product,
                     'quantity': quantity,
                     'size': size,
@@ -53,9 +54,10 @@ def order_create(request):
         phone = (request.POST.get('phone') or '').strip()
         address = (request.POST.get('address') or '').strip()
         payment_method = (request.POST.get('payment_method') or '').strip()
+        selected_items = (request.POST.get('selected_items') or '').strip()
         
-        # Lấy items từ query string của action URL trong form
-        item_keys_str = request.GET.get('items', '')
+        # Ưu tiên danh sách item từ POST, fallback về query string để tương thích cũ
+        item_keys_str = selected_items or request.GET.get('items', '')
         cart_session = request.session.get('cart', {})
         
         if not item_keys_str:
@@ -63,8 +65,8 @@ def order_create(request):
             return redirect('cart:cart_detail')
 
         # Basic input validation
-        if not full_name or not address or not phone:
-            messages.error(request, 'Vui lòng cung cấp đầy đủ thông tin giao hàng.')
+        if not full_name or not phone:
+            messages.error(request, 'Vui lòng cung cấp đầy đủ họ tên và số điện thoại.')
             return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         if len(full_name) > 200 or len(address) > 1000:
@@ -73,6 +75,15 @@ def order_create(request):
 
         if not phone.isdigit() or len(phone) < 6:
             messages.error(request, 'Số điện thoại không hợp lệ.')
+            return redirect(f'/orders/checkout/?items={item_keys_str}')
+
+        allowed_payment_methods = {'COD', 'BANK'}
+        if payment_method not in allowed_payment_methods:
+            messages.error(request, 'Phương thức thanh toán không hợp lệ.')
+            return redirect(f'/orders/checkout/?items={item_keys_str}')
+
+        if not address:
+            messages.error(request, 'Vui lòng cung cấp địa chỉ giao hàng.')
             return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         # 1. Tạo đơn hàng
@@ -97,7 +108,7 @@ def order_create(request):
                 size = key.split('_')[1] if '_' in key else 'N/A'
                 
                 product = get_object_or_404(Product, id=product_id)
-                line_total = float(product.price) * quantity
+                line_total = int(product.price) * quantity
                 current_total += line_total
                 
                 OrderItem.objects.create(

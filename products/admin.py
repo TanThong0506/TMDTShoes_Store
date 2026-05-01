@@ -71,6 +71,9 @@ class ProductAdmin(admin.ModelAdmin):
         return ", ".join([cat.name for cat in obj.category.all()])
     display_categories.short_description = 'Loại sản phẩm'
 
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff
+
 
 class SalesReportAdmin(admin.ModelAdmin):
     change_list_template = 'admin/products/salesreport/change_list.html'

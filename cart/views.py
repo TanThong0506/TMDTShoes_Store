@@ -95,7 +95,13 @@ def add_to_cart(request, product_id):
         return redirect('cart:cart_detail')
     return redirect('home')
 
-def update_cart(request, item_key, action):
+def update_cart(request, item_key=None, action=None):
+    item_key = item_key or request.GET.get('item_key') or request.POST.get('item_key')
+    action = action or request.GET.get('action') or request.POST.get('action')
+
+    if not item_key or not action:
+        return JsonResponse({'success': False, 'error': 'Thiếu item_key hoặc action'}, status=400)
+
     cart = request.session.get('cart', {})
     item_total_html = "0"
     current_qty = 0
@@ -137,7 +143,11 @@ def update_cart(request, item_key, action):
         'total_cart': intcomma(new_total_cart)
     })
 
-def remove_from_cart(request, item_key):
+def remove_from_cart(request, item_key=None):
+    item_key = item_key or request.GET.get('item_key') or request.POST.get('item_key')
+    if not item_key:
+        return JsonResponse({'success': False, 'error': 'Thiếu item_key'}, status=400)
+
     cart = request.session.get('cart', {})
     if item_key in cart:
         del cart[item_key]

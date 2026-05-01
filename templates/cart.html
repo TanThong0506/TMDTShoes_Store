@@ -23,7 +23,7 @@
                             </thead>
                             <tbody>
                                 {% for item in items %}
-                                <tr id="row-{{ item.item_key }}" class="border-bottom item-row">
+                                <tr class="border-bottom item-row" data-item-key="{{ item.item_key }}">
                                     <td class="ps-4">
                                         <input type="checkbox" class="form-check-input item-checkbox" 
                                             data-price="{{ item.product.price }}" 
@@ -43,17 +43,17 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="input-group input-group-sm mx-auto" style="width: 105px;">
-                                            <button class="btn btn-outline-secondary" type="button" onclick="updateCart('{{ item.item_key }}', 'decrease')">-</button>
-                                            <span class="form-control text-center fw-bold" id="qty-{{ item.item_key }}">{{ item.quantity }}</span>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="updateCart('{{ item.item_key }}', 'increase')">+</button>
+                                            <button class="btn btn-outline-secondary btn-update-cart" type="button" data-item-key="{{ item.item_key }}" data-action="decrease">-</button>
+                                            <span class="form-control text-center fw-bold qty-value" data-item-key="{{ item.item_key }}">{{ item.quantity }}</span>
+                                            <button class="btn btn-outline-secondary btn-update-cart" type="button" data-item-key="{{ item.item_key }}" data-action="increase">+</button>
                                         </div>
                                     </td>
                                     <td class="text-center fw-bold text-danger">
-                                        <span id="item-total-{{ item.item_key }}">{{ item.total_price|intcomma }}</span>₫
+                                        <span class="item-total-value" data-item-key="{{ item.item_key }}">{{ item.total_price|intcomma }}</span>₫
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" 
-                                                onclick="removeFromCart('{{ item.item_key }}')"
+                                        <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm btn-remove-cart"
+                                                data-item-key="{{ item.item_key }}"
                                                 title="Xóa khỏi giỏ hàng">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -150,13 +150,31 @@
             return parseFloat(priceString.toString().replace(/\./g, '').replace(/,/g, '')) || 0;
         }
 
+        function findRowByKey(itemKey) {
+            return $('.item-row').filter(function() {
+                return $(this).data('itemKey') === itemKey;
+            }).first();
+        }
+
+        function findQtyByKey(itemKey) {
+            return $('.qty-value').filter(function() {
+                return $(this).data('itemKey') === itemKey;
+            }).first();
+        }
+
+        function findItemTotalByKey(itemKey) {
+            return $('.item-total-value').filter(function() {
+                return $(this).data('itemKey') === itemKey;
+            }).first();
+        }
+
         function calculateSelectedTotal() {
             let total = 0;
             let count = 0;
             
             $('.item-checkbox:checked').each(function() {
                 let key = $(this).data('key');
-                let itemTotalPriceText = $(`#item-total-${key}`).text();
+                let itemTotalPriceText = findItemTotalByKey(key).text();
                 total += cleanPrice(itemTotalPriceText);
                 count++;
             });
@@ -182,20 +200,31 @@
                 }
                 calculateSelectedTotal();
             });
+
+            $(document).on('click', '.btn-update-cart', function() {
+                const itemKey = $(this).data('itemKey');
+                const action = $(this).data('action');
+                updateCart(itemKey, action);
+            });
+
+            $(document).on('click', '.btn-remove-cart', function() {
+                const itemKey = $(this).data('itemKey');
+                removeFromCart(itemKey);
+            });
         });
 
         function updateCart(itemKey, action) {
             $.ajax({
-                url: `/cart/update/${itemKey}/${action}/`,
+                url: `/cart/update/?item_key=${encodeURIComponent(itemKey)}&action=${encodeURIComponent(action)}`,
                 method: 'GET',
                 success: function(data) {
                     if (data.success) {
                         $('.cart-count').text(data.cart_count);
                         if (data.item_count > 0) {
-                            $(`#qty-${itemKey}`).text(data.item_count);
-                            $(`#item-total-${itemKey}`).text(data.item_total);
+                            findQtyByKey(itemKey).text(data.item_count);
+                            findItemTotalByKey(itemKey).text(data.item_total);
                         } else {
-                            $(`#row-${itemKey}`).remove();
+                            findRowByKey(itemKey).remove();
                             if ($('.item-row').length === 0) location.reload();
                         }
                         calculateSelectedTotal();
@@ -206,12 +235,12 @@
 
         function removeFromCart(itemKey) {
             $.ajax({
-                url: `/cart/remove/${itemKey}/`,
+                url: `/cart/remove/?item_key=${encodeURIComponent(itemKey)}`,
                 method: 'GET',
                 success: function(data) {
                     if (data.success) {
                         $('.cart-count').text(data.cart_count);
-                        $(`#row-${itemKey}`).fadeOut(400, function() {
+                        findRowByKey(itemKey).fadeOut(400, function() {
                             $(this).remove();
                             if ($('.item-row').length === 0) {
                                 location.reload(); 

@@ -15,7 +15,7 @@ def home(request):
     # Lọc chuẩn giày Sale (Chỉ lấy những giày có giá gốc lớn hơn giá bán hiện tại)
     sale_products = Product.objects.filter(old_price__gt=F('price'), is_active=True).order_by('?')[:10]
     popular_categories = Category.objects.all()[:4] 
-    latest_products = Product.objects.all().order_by('-id')[:8]
+    latest_products = Product.objects.filter(is_active=True).order_by('-id')[:8]
     
     # Lấy danh sách hãng để làm băng chuyền
     brands = Brand.objects.all() 
