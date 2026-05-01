@@ -213,3 +213,36 @@ def order_detail(request, order_id):
     # Lấy đơn hàng đúng của người dùng đang đăng nhập, nếu không có trả về 404
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'order_detail_view.html', {'order': order})
+
+@login_required
+def request_return(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    if request.method == 'POST':
+        if order.can_return:
+            reason = request.POST.get('return_reason', '').strip()
+            if not reason:
+                messages.error(request, 'Vui lòng nhập lý do đổi trả.')
+            else:
+                order.status = 'Return_Requested'
+                order.return_reason = reason
+                order.save()
+                messages.success(request, 'Đã gửi yêu cầu đổi/trả hàng. Shop sẽ liên hệ với bạn trong thời gian sớm nhất.')
+        else:
+            messages.error(request, 'Đơn hàng này không đủ điều kiện đổi trả hoặc đã quá hạn 7 ngày.')
+    return redirect('products:order_detail', order_id=order.id)
+
+@login_required
+def return_eligible_orders(request):
+    import datetime
+    from django.utils import timezone
+    now = timezone.now()
+    seven_days_ago = now - datetime.timedelta(days=7)
+    
+    # Lấy các đơn hàng trong 7 ngày gần đây (chưa bị hủy hoặc đổi)
+    eligible_orders = Order.objects.filter(
+        user=request.user, 
+        status__in=['Pending', 'Processing', 'Completed'], 
+        created_at__gte=seven_days_ago
+    ).order_by('-created_at')
+    
+    return render(request, 'return_eligible_orders.html', {'orders': eligible_orders})
