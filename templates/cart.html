@@ -228,6 +228,16 @@
                             if ($('.item-row').length === 0) location.reload();
                         }
                         calculateSelectedTotal();
+                        showMessage('Cập nhật giỏ hàng thành công', 'success');
+                    } else {
+                        showMessage(data.error || 'Có lỗi xảy ra', 'danger');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        showMessage(xhr.responseJSON.error, 'danger');
+                    } else {
+                        showMessage('Có lỗi xảy ra khi cập nhật giỏ hàng', 'danger');
                     }
                 }
             });
@@ -247,9 +257,41 @@
                             }
                             calculateSelectedTotal();
                         });
+                        showMessage(data.message || 'Xóa sản phẩm thành công', 'success');
+                    } else {
+                        showMessage(data.error || 'Có lỗi xảy ra', 'danger');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        showMessage(xhr.responseJSON.error, 'danger');
+                    } else {
+                        showMessage('Có lỗi xảy ra khi xóa sản phẩm', 'danger');
                     }
                 }
             });
+        }
+
+        function showMessage(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-message alert-${type}`;
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <span>
+                        ${type === 'success' ? '<i class="fas fa-check-circle me-2"></i>' : '<i class="fas fa-exclamation-circle me-2"></i>'}
+                        ${message}
+                    </span>
+                    <span class="alert-close" onclick="this.parentElement.parentElement.style.display='none';">×</span>
+                </div>
+            `;
+            const container = document.getElementById('messages-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
         }
 
         $('#checkout-btn').click(function() {

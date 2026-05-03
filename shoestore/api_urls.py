@@ -5,7 +5,7 @@ from products.api import (
     BrandViewSet, CategoryViewSet, SizeViewSet, ProductViewSet, ProductImageViewSet,
     ReviewViewSet, StorePolicyViewSet, SaleViewSet,
 )
-from orders.api import OrderViewSet, OrderItemViewSet
+from orders.api import OrderViewSet, OrderItemViewSet, PaymentMethodOptionViewSet
 from cart.api import CartViewSet, CartItemViewSet
 from users.api import (
     ChatMessageViewSet,
@@ -28,6 +28,7 @@ router.register(r'store-policies', StorePolicyViewSet)
 
 router.register(r'orders', OrderViewSet)
 router.register(r'order-items', OrderItemViewSet)
+router.register(r'payment-methods', PaymentMethodOptionViewSet)
 
 router.register(r'carts', CartViewSet)
 router.register(r'cart-items', CartItemViewSet)

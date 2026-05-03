@@ -69,5 +69,15 @@ class SaleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ['id', 'title', 'products', 'start_date', 'end_date', 'active', 'created_at']
+        fields = [
+            'id',
+            'title',
+            'products',
+            'discount_type',
+            'discount_value',
+            'start_date',
+            'end_date',
+            'active',
+            'created_at',
+        ]
         read_only_fields = ['created_at']

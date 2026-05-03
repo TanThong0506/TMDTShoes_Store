@@ -41,7 +41,7 @@
                                 {% elif order.status == 'Return_Denied' %}
                                     <span class="badge rounded-pill bg-danger-subtle text-danger px-3 border border-danger">Từ chối đổi/trả</span>
                                 {% else %}
-                                    <span class="badge rounded-pill bg-dark-subtle text-dark px-3 border border-dark">{{ order.get_status_display }}</span>
+                                    <span class="badge rounded-pill bg-dark-subtle text-dark px-3 border border-dark">{{ order.display_status }}</span>
                                 {% endif %}
                             </td>
                             <td class="py-3 text-center">

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% load humanize %} {% block content %}
+{% load humanize static %}
+{% block content %}
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
@@ -69,6 +70,7 @@
 
             <form id="add-to-cart-form" method="POST" action="{% url 'cart:cart_add' product.id %}" class="product-buy-card">
                 {% csrf_token %}
+                <div id="product-form-alert" class="alert alert-danger" style="display:none; margin-bottom:12px;"></div>
                 <div class="mb-4">
                     <p class="selection-label fw-bold mb-2">
                         Kích thước (Size): 
@@ -442,16 +444,44 @@
         border: 1px solid #e5e7eb;
         border-radius: 999px;
         padding: 0.75rem 1.15rem;
-        background: #fff;
-        color: #334155;
-        transition: all 0.2s ease;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        transition: all 0.18s ease;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Make the two tabs visually opposite */
+    .product-tabs .nav-link#mota-tab {
+        background: #111827;
+        color: #ffffff;
+    }
+
+    .product-tabs .nav-link#mota-tab:hover {
+        background: #1f2937;
+    }
+
+    .product-tabs .nav-link#thanh-toan-tab {
+        background: #f8fafc;
+        color: #111827;
+    }
+
+    .product-tabs .nav-link#thanh-toan-tab:hover {
+        background: #eef2f7;
     }
 
     .product-tabs .nav-link.active {
         border-color: #dc3545 !important;
-        background: linear-gradient(135deg, #dc3545 0%, #b91c1c 100%) !important;
-        color: #fff !important;
-        box-shadow: 0 10px 24px rgba(220, 53, 69, 0.12);
+        box-shadow: 0 10px 24px rgba(220, 53, 69, 0.16);
+    }
+
+    .product-tabs .nav-link#mota-tab.active {
+        background: linear-gradient(135deg, #111827 0%, #0f172a 100%) !important;
+        color: #ffffff !important;
+    }
+
+    .product-tabs .nav-link#thanh-toan-tab.active {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        color: #111827 !important;
     }
 
     .product-tab-content {
@@ -738,7 +768,7 @@
     }
     .btn-check:checked + .btn-outline-dark { background-color: #000 !important; color: #fff !important; }
     .nav-tabs .nav-link { border: none; padding: 12px 25px; }
-    .nav-tabs .nav-link.active { border-bottom: 4px solid #000 !important; background: #f8f9fa !important; }
+    .nav-tabs .nav-link.active { border-bottom: 4px solid #000 !important; background: transparent !important; }
     .zoom-container { position: relative; width: 100%; height: 500px; overflow: hidden; cursor: zoom-in; }
     .zoom-container .zoomable {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -796,13 +826,73 @@
 </style>
 
 
+<style>
+     /* Size guide modal tweaks: wider dialog, internal scrolling, nicer table.
+         Add top margin so modal content isn't hidden under the fixed navbar. */
+     #sizeGuideModal .modal-dialog { max-width: 1100px; width: 95%; margin-top: 80px; }
+    #sizeGuideModal .modal-body { max-height: 70vh; overflow-y: auto; padding: 1.5rem; color: #212529; font-size: 1rem; line-height: 1.6; }
+    #sizeGuideModal .table { margin-bottom: 0; }
+    #sizeGuideModal .table th, #sizeGuideModal .table td { padding: 0.9rem 0.75rem; vertical-align: middle; font-size: 0.95rem; color: #222; }
+    #sizeGuideModal .table thead th { text-align: left; font-weight: 700; background: #f8f9fa; }
+    #sizeGuideModal .modal-content { border-radius: 8px; }
+    #sizeGuideModal .modal-footer { padding: 0.75rem 1rem; }
+    /* Allow text selection for readability */
+    #sizeGuideModal .modal-body, #sizeGuideModal .modal-body * { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
+    @media (max-width: 576px) {
+        #sizeGuideModal .modal-dialog { max-width: 95%; }
+        #sizeGuideModal .modal-body { max-height: 65vh; }
+        #sizeGuideModal .table th, #sizeGuideModal .table td { padding: 0.6rem 0.5rem; }
+    }
+</style>
+
 <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hướng dẫn chọn size</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>1. Đo chiều dài bàn chân (từ gót đến ngón dài nhất) trên tấm giấy, tính bằng cm.</p>
+                        <p>2. So sánh với bảng quy đổi phía bên phải để tìm kích cỡ EU tương ứng. Nếu nằm giữa 2 size, chọn size lớn hơn.</p>
+                        <p class="small text-muted">Mẹo: đo khi mang tất nếu bạn thường đi cùng tất để chính xác hơn.</p>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="{% static 'images/size-guide.png' %}" alt="Bảng hướng dẫn chọn size" class="img-fluid" onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <hr>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>EU</th><th>Chiều dài (cm)</th></tr></thead>
+                        <tbody>
+                            <tr><td>36</td><td>23.0</td></tr>
+                            <tr><td>37</td><td>23.5</td></tr>
+                            <tr><td>38</td><td>24.0</td></tr>
+                            <tr><td>39</td><td>24.5</td></tr>
+                            <tr><td>40</td><td>25.0</td></tr>
+                            <tr><td>41</td><td>25.5</td></tr>
+                            <tr><td>42</td><td>26.0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
     </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
 
 <script>
+    // Auth flag for client-side checks
+    var IS_AUTH = {{ user.is_authenticated|yesno:"true,false" }};
+    var LOGIN_URL = "{% url 'login' %}?next={{ request.path }}";
     $(document).ready(function() {
         function getCookie(name) {
             let cookieValue = null;
@@ -859,6 +949,29 @@
         $('#add-to-cart-form').on('submit', function(e) {
             e.preventDefault(); 
             var form = $(this);
+            // Client-side validation: ensure user is logged in, size selected and quantity valid
+            if (!IS_AUTH) {
+                // show login prompt modal
+                $('#loginPromptModal').modal('show');
+                return;
+            }
+            var chosenSize = form.find('input[name="size"]:checked').val();
+            var qtyVal = parseInt(form.find('input[name="quantity"]').val() || '0', 10);
+            function showFormError(msg) {
+                var a = $('#product-form-alert');
+                a.text(msg).stop(true,true).fadeIn(150).show();
+                setTimeout(function(){ a.fadeOut(300); }, 4000);
+            }
+            if (!chosenSize) {
+                showFormError('Vui lòng chọn size trước khi thêm vào giỏ hàng.');
+                form.find('label[for^="s-"]').first().focus();
+                return;
+            }
+            if (isNaN(qtyVal) || qtyVal < 1) {
+                showFormError('Số lượng không hợp lệ. Vui lòng nhập số >= 1.');
+                form.find('input[name="quantity"]').focus();
+                return;
+            }
             $.ajax({
                 type: "POST",
                 url: form.attr('action'),
@@ -874,4 +987,23 @@
         });
     });
 </script>
+
+<!-- Login prompt modal -->
+<div class="modal fade" id="loginPromptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cần đăng nhập</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng và tiến hành thanh toán.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ request.path }}" id="loginGoLink" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tiếp tục xem</a>
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">Đăng nhập / Đăng ký</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

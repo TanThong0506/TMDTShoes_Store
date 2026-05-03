@@ -23,7 +23,7 @@ if api_key:
     client = Groq(api_key=api_key)
 else:
     client = None
-    print("⚠️ LỖI: Chưa lấy được GROQ_API_KEY từ file .env")
+    logger.warning("GROQ_API_KEY không được cấu hình trong .env; tính năng Groq chat sẽ tắt.")
 
 # ==========================================
 # 1. CÁC TRANG CƠ BẢN

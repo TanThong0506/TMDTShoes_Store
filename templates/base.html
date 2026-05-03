@@ -8,49 +8,317 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        .navbar { z-index: 1070 !important; }
-        .dropdown-menu { z-index: 1080 !important; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
-        .navbar-logo { transition: transform 0.3s ease; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); object-fit: contain; }
-            .navbar { z-index: 11000 !important; }
-            .dropdown-menu { z-index: 11010 !important; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
-        .navbar-brand:hover .navbar-logo { transform: scale(1.1) rotate(5deg); }
-        .navbar-logo-text { font-weight: 800; letter-spacing: -1px; text-transform: uppercase; }
-        .nav-link-custom { position: relative; }
-        .nav-link-custom::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 5px; left: 50%; background-color: #fff; transition: all 0.3s ease; transform: translateX(-50%); }
-        .nav-link-custom:hover::after { width: 70%; }
-        .btn-sale-premium { transition: all 0.3s ease; border: 1px solid transparent; }
-        .btn-sale-premium:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4) !important; color: #fff !important; }
-        .dropdown-item:hover { background-color: #f8f9fa; color: #000; }
-        .placeholder-light::placeholder { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
-        .badge-cart { position: absolute; top: -5px; right: -5px; font-size: 0.7rem; padding: 0.25em 0.45em; transition: transform 0.3s ease; display: inline-block; }
+        .alert-message { margin: 0; border-radius: 10px; border: none; animation: slideDown 0.3s ease-out; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+        .alert-error, .alert-danger { background-color: #f8d7da; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; color: #856404; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; }
+        .alert-message .alert-close { cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+        .alert-message .alert-close:hover { opacity: 1; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .messages-container { position: fixed; top: 100px; right: 20px; max-width: 400px; z-index: 1050; }
+        @media (max-width: 768px) { .messages-container { top: 80px; right: 10px; left: 10px; max-width: none; } }
 
-        /* --- BONG BÓNG CHAT --- */
-        #chat-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #ffc107; color: #212529; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 9999; transition: transform 0.3s ease; }
-        #chat-bubble:hover { transform: scale(1.1); }
-        #chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 480px; background: #fff; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 9999; }
-            #chat-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #ffc107; color: #212529; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; transition: transform 0.3s ease; }
-            #chat-widget { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 480px; background: #fff; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 1000; }
-        .widget-header { background: #212529; color: #fff; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .widget-header i.fa-times { cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
-        .widget-header i.fa-times:hover { color: #ffc107; }
-        .widget-body { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; scroll-behavior: smooth; }
-        .msg-bubble { padding: 10px 15px; border-radius: 18px; max-width: 85%; line-height: 1.4; word-wrap: break-word; }
-        .msg-bot { background: #e9ecef; color: #212529; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .msg-user { background: #ffc107; color: #212529; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 500; }
-        .widget-footer { padding: 10px; background: #fff; border-top: 1px solid #ddd; display: flex; gap: 8px; }
-        .widget-footer input { flex: 1; border: 1px solid #ccc; border-radius: 20px; padding: 8px 15px; outline: none; }
-        .widget-footer input:focus { border-color: #ffc107; }
-        .widget-footer button { background: #212529; color: #ffc107; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        
-        /* Nút chọn Size & Hủy */
-        .btn-size { background-color: #fff; border: 1px solid #198754; color: #198754; padding: 6px 14px; border-radius: 20px; margin: 4px 4px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.2s; }
-        .btn-size:hover { background-color: #198754; color: #fff; }
-        .btn-cancel { background-color: #fff; border: 1px solid #dc3545; color: #dc3545; padding: 6px 14px; border-radius: 20px; margin: 4px 0 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.2s; }
-        .btn-cancel:hover { background-color: #dc3545; color: #fff; }
-        .options-box { margin-top: 12px; display: flex; flex-wrap: wrap; border-top: 1px dashed #ccc; padding-top: 10px; }
+        .navbar {
+            background: linear-gradient(135deg, #161a1d 0%, #212529 55%, #1b2024 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 0.7rem;
+            padding-bottom: 0.7rem;
+        }
+
+        .navbar .container {
+            gap: 1rem;
+        }
+
+        .navbar-brand {
+            gap: 0.5rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .navbar-logo {
+            width: 38px;
+            height: 38px;
+        }
+
+        .navbar .nav-link {
+            color: rgba(255, 255, 255, 0.88);
+            border-radius: 999px;
+            white-space: nowrap;
+            font-size: 0.92rem;
+            font-weight: 600;
+            line-height: 1.1;
+            padding: 0.45rem 0.8rem;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .navbar .nav-link:hover,
+        .navbar .nav-link:focus {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .navbar .nav-link.text-uppercase {
+            letter-spacing: 0.28px;
+        }
+
+        .navbar-nav.me-auto,
+        .navbar-nav.ms-auto {
+            gap: 1rem !important;
+        }
+
+        .btn-sale-premium {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff3d57 100%) !important;
+            border: 0;
+            box-shadow: 0 10px 24px rgba(255, 61, 87, 0.28);
+        }
+
+        .btn-sale-premium:hover {
+            color: #fff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(255, 61, 87, 0.34);
+        }
+
+        .btn-sale-premium .fw-bold {
+            letter-spacing: 0.5px;
+        }
+
+        .btn-sale-premium span {
+            white-space: nowrap;
+        }
+
+        .navbar form .input-group {
+            overflow: hidden;
+            border-radius: 999px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .navbar form {
+            max-width: 380px !important;
+        }
+
+        .navbar form .form-control {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background-color: rgba(255, 255, 255, 0.04) !important;
+            min-height: 46px;
+            font-size: 0.95rem;
+        }
+
+        .navbar form .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .navbar form .btn-warning {
+            min-height: 46px;
+            font-weight: 700;
+        }
+
+        .badge-cart {
+            min-width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            font-size: 0.72rem;
+            transform: translateY(-1px);
+        }
+
+        .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .navbar .dropdown-menu {
+            border-radius: 16px;
+            padding: 0.65rem;
+        }
+
+        .navbar .dropdown-item {
+            border-radius: 12px;
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar .container {
+                align-items: flex-start;
+            }
+
+            .navbar-collapse {
+                padding-top: 0.75rem;
+            }
+
+            .navbar form {
+                max-width: none !important;
+                width: 100% !important;
+            }
+
+            .navbar .navbar-nav {
+                align-items: flex-start !important;
+            }
+        }
         
         /* Chỉnh CSS hình ảnh Chatbot mượt hơn */
         .chat-img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        #chat-bubble {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #212529;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            cursor: pointer;
+            z-index: 1060;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #chat-bubble:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+        }
+
+        #chat-widget {
+            position: fixed;
+            right: 20px;
+            bottom: 86px;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            height: 520px;
+            max-height: calc(100vh - 120px);
+            display: none;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            z-index: 1059;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #212529, #343a40);
+            color: #fff;
+            font-weight: 700;
+            flex: 0 0 auto;
+        }
+
+        .widget-header i.fa-times {
+            cursor: pointer;
+            opacity: 0.85;
+        }
+
+        .widget-body {
+            flex: 1 1 auto;
+            padding: 14px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .widget-footer {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 12px;
+            border-top: 1px solid #e9ecef;
+            background: #fff;
+            flex: 0 0 auto;
+        }
+
+        #widget-input {
+            flex: 1;
+            border: 1px solid #ced4da;
+            border-radius: 999px;
+            padding: 10px 14px;
+            outline: none;
+        }
+
+        .widget-footer button {
+            border: none;
+            background: #ffc107;
+            color: #000;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
+        .msg-bubble {
+            max-width: 85%;
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .msg-user {
+            margin-left: auto;
+            background: #d1ecf1;
+            color: #0c5460;
+            border-bottom-right-radius: 6px;
+        }
+
+        .msg-bot {
+            background: #fff;
+            color: #212529;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 6px;
+        }
+
+        .options-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-size,
+        .btn-cancel {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-size {
+            background: #212529;
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        @media (max-width: 768px) {
+            #chat-bubble {
+                right: 14px;
+                bottom: 14px;
+            }
+
+            #chat-widget {
+                right: 14px;
+                left: 14px;
+                bottom: 78px;
+                width: auto;
+                height: 70vh;
+            }
+        }
     </style>
 </head>
 <body class="bg-light"> 
@@ -111,6 +379,31 @@
     </div>
 </nav>
 
+<!-- Messages container for alerts -->
+<div class="messages-container" id="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-message alert-{{ message.tags }}" role="alert">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span>
+                        {% if message.tags == 'success' or message.tags == '' %}
+                            <i class="fas fa-check-circle me-2"></i>
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        {{ message }}
+                    </span>
+                    <span class="alert-close" onclick="this.parentElement.parentElement.style.display='none';">×</span>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
 <div class="container mt-4 min-vh-100"> 
     {% block content %} {% endblock %}
 </div>
@@ -121,8 +414,8 @@
             <div class="col-md-4 mb-4">
                 <h5 class="fw-bold">Shoe Store</h5>
                 <p class="small text-muted">Cửa hàng giày chính hãng, giao hàng toàn quốc.</p>
-                <p class="small mb-0">Hotline: <a href="tel:0123456789" class="text-warning">0123 456 789</a></p>
-                <p class="small">Địa chỉ: 123 Đường Giày, Quận Chân, TP. Hồ Chí Minh</p>
+                <p class="small mb-0">Hotline: <a href="tel:0123456789" class="text-warning">0368266780</a></p>
+                <p class="small">Địa chỉ: 87 Nguyễn Sơn, Hòa Cường Nam, tp. Đà Nẵng</p>
             </div>
             <div class="col-md-2 mb-4">
                 <h6 class="fw-bold">Danh mục</h6>
@@ -401,5 +694,6 @@
         });
     }
 </script>
+<script src="{% static 'js/password-toggle.js' %}"></script>
 </body>
 </html>

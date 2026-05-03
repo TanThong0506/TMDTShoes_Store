@@ -69,7 +69,7 @@
                 <p><strong>Phương thức thanh toán:</strong> {{ order.payment_method }}</p>
                 <p><strong>Trạng thái:</strong> 
                     <span class="badge {% if order.status == 'Completed' or order.status == 'Đã thanh toán' %}bg-success{% elif order.status == 'Cancelled' or order.status == 'Đã hủy' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
-                        {{ order.status }}
+                        {{ order.display_status }}
                     </span>
                 </p>
                 <p class="h4 text-danger border-top pt-2 mt-2">

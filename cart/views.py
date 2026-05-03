@@ -4,7 +4,16 @@ from products.models import Product
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
 import json
+
+"""Views xử lý giỏ hàng và API liên quan.
+
+Bao gồm các view HTML (cart_detail, add_to_cart, update_cart, remove_from_cart, checkout)
+và API JSON tương ứng (`api_*`).
+"""
+
 
 # Hàm phụ trợ xử lý cả 2 loại dữ liệu (int của web và dict của chatbot)
 def _get_cart_data(cart):
@@ -64,16 +73,83 @@ def cart_detail(request):
 
 def add_to_cart(request, product_id):
     if request.method == 'POST':
-        get_object_or_404(Product, id=product_id, is_active=True)
-        cart = request.session.get('cart', {})
+        # Enforce authentication: require login to add to cart
+        if not request.user.is_authenticated:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Bạn cần đăng nhập để thêm vào giỏ hàng',
+                    'error_code': 'login_required'
+                }, status=401)
+            # redirect to login page with next back to product
+            return HttpResponseRedirect(f"/accounts/login/?next={request.path}")
+        
+        # Kiểm tra sản phẩm tồn tại
+        try:
+            product = Product.objects.get(id=product_id, is_active=True)
+        except Product.DoesNotExist:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Sản phẩm không tồn tại hoặc đã bị xóa',
+                    'error_code': 'product_not_found'
+                }, status=404)
+            return redirect('home')
+        
+        # Lấy số lượng và kiểm tra hợp lệ
         try:
             quantity = int(request.POST.get('quantity', 1))
-        except ValueError:
+        except (ValueError, TypeError):
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Số lượng không hợp lệ',
+                    'error_code': 'invalid_quantity'
+                }, status=400)
             quantity = 1
+        
+        # Validate quantity
         if quantity < 1:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Số lượng phải lớn hơn 0',
+                    'error_code': 'quantity_too_low'
+                }, status=400)
             quantity = 1
+        
+        if quantity > 999:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Số lượng không được vượt quá 999',
+                    'error_code': 'quantity_too_high'
+                }, status=400)
+            quantity = 999
+        
+        # Kiểm tra kho hàng
+        if product.stock <= 0:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Sản phẩm này hiện tại không có hàng',
+                    'error_code': 'out_of_stock'
+                }, status=400)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'error': 'out_of_stock'}, status=400)
+        
+        if quantity > product.stock:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Chỉ còn {product.stock} sản phẩm trong kho',
+                    'error_code': 'insufficient_stock'
+                }, status=400)
+        
         size = request.POST.get('size', 'N/A')
         item_key = f"{product_id}_{size}"
+        
+        cart = request.session.get('cart', {})
         
         # Tương thích cộng dồn cho cả 2 kiểu dữ liệu
         if item_key in cart:
@@ -91,7 +167,11 @@ def add_to_cart(request, product_id):
         request.session.modified = True
         
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'success', 'cart_count': new_count})
+            return JsonResponse({
+                'success': True, 
+                'cart_count': new_count,
+                'message': f'Đã thêm {product.name} vào giỏ hàng'
+            })
         return redirect('cart:cart_detail')
     return redirect('home')
 
@@ -100,13 +180,31 @@ def update_cart(request, item_key=None, action=None):
     action = action or request.GET.get('action') or request.POST.get('action')
 
     if not item_key or not action:
-        return JsonResponse({'success': False, 'error': 'Thiếu item_key hoặc action'}, status=400)
+        return JsonResponse({
+            'success': False, 
+            'error': 'Thông tin không hợp lệ',
+            'error_code': 'missing_params'
+        }, status=400)
+
+    if action not in ['increase', 'decrease']:
+        return JsonResponse({
+            'success': False,
+            'error': 'Hành động không hợp lệ',
+            'error_code': 'invalid_action'
+        }, status=400)
 
     cart = request.session.get('cart', {})
     item_total_html = "0"
     current_qty = 0
     
-    if item_key in cart:
+    if item_key not in cart:
+        return JsonResponse({
+            'success': False,
+            'error': 'Sản phẩm không có trong giỏ hàng',
+            'error_code': 'item_not_found'
+        }, status=404)
+    
+    try:
         is_dict = isinstance(cart[item_key], dict)
         current_qty = cart[item_key]['quantity'] if is_dict else cart[item_key]
         
@@ -114,9 +212,21 @@ def update_cart(request, item_key=None, action=None):
             current_qty += 1
         elif action == 'decrease':
             current_qty -= 1
-            
+        
+        # Validate stock before increase
+        if action == 'increase':
+            p_id = item_key.split('_')[0]
+            product = Product.objects.get(id=int(p_id))
+            if current_qty > product.stock:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Chỉ còn {product.stock} sản phẩm trong kho',
+                    'error_code': 'insufficient_stock'
+                }, status=400)
+        
         if current_qty <= 0:
             del cart[item_key]
+            current_qty = 0
         else:
             if is_dict:
                 cart[item_key]['quantity'] = current_qty
@@ -128,42 +238,68 @@ def update_cart(request, item_key=None, action=None):
             product = Product.objects.get(id=int(p_id))
             item_total_html = intcomma(product.price * current_qty)
 
-    request.session['cart'] = cart
-    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
-    request.session['cart_count'] = new_count
-    request.session.modified = True
+        request.session['cart'] = cart
+        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+        request.session['cart_count'] = new_count
+        request.session.modified = True
+        
+        new_total_cart = _get_cart_data(cart)
+        
+        return JsonResponse({
+            'success': True, 
+            'cart_count': new_count,
+            'item_count': current_qty if item_key in cart else 0,
+            'item_total': item_total_html,
+            'total_cart': intcomma(new_total_cart)
+        })
     
-    new_total_cart = _get_cart_data(cart)
-    
-    return JsonResponse({
-        'success': True, 
-        'cart_count': new_count,
-        'item_count': current_qty if item_key in cart else 0,
-        'item_total': item_total_html,
-        'total_cart': intcomma(new_total_cart)
-    })
+    except (Product.DoesNotExist, ValueError, KeyError) as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Có lỗi xảy ra khi cập nhật giỏ hàng',
+            'error_code': 'update_error'
+        }, status=500)
 
 def remove_from_cart(request, item_key=None):
     item_key = item_key or request.GET.get('item_key') or request.POST.get('item_key')
     if not item_key:
-        return JsonResponse({'success': False, 'error': 'Thiếu item_key'}, status=400)
+        return JsonResponse({
+            'success': False, 
+            'error': 'Thông tin không hợp lệ',
+            'error_code': 'missing_item_key'
+        }, status=400)
 
     cart = request.session.get('cart', {})
-    if item_key in cart:
+    
+    if item_key not in cart:
+        return JsonResponse({
+            'success': False,
+            'error': 'Sản phẩm không có trong giỏ hàng',
+            'error_code': 'item_not_found'
+        }, status=404)
+    
+    try:
         del cart[item_key]
         
-    request.session['cart'] = cart
-    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
-    request.session['cart_count'] = new_count
-    request.session.modified = True
-    
-    new_total_cart = _get_cart_data(cart)
-    
-    return JsonResponse({
-        'success': True,
-        'cart_count': new_count,
-        'total_cart': intcomma(new_total_cart)
-    })
+        request.session['cart'] = cart
+        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+        request.session['cart_count'] = new_count
+        request.session.modified = True
+        
+        new_total_cart = _get_cart_data(cart)
+        
+        return JsonResponse({
+            'success': True,
+            'cart_count': new_count,
+            'total_cart': intcomma(new_total_cart),
+            'message': 'Đã xóa sản phẩm khỏi giỏ hàng'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Có lỗi xảy ra khi xóa sản phẩm',
+            'error_code': 'delete_error'
+        }, status=500)
 
 def checkout(request):
     item_keys_str = request.GET.get('items', '')
@@ -218,6 +354,10 @@ def api_add_to_cart(request):
     except (ValueError, TypeError):
         quantity = 1
     size = data.get('size', 'N/A')
+
+    # Enforce authentication for API add-to-cart as well
+    if not getattr(request, 'user', None) or not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'login_required'}, status=401)
 
     cart = request.session.get('cart', {})
     item_key = f"{product_id}_{size}"

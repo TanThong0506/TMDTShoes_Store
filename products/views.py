@@ -166,35 +166,51 @@ def search_products(request):
 # ==========================================
 def sale_page(request):
     now = timezone.now()
-    # 1. Nếu có chương trình Sale đang active (theo ngày) thì lấy các sản phẩm đó
-    active_sale = Sale.objects.filter(active=True, start_date__lte=now, end_date__gte=now).order_by('-start_date').first()
-    if active_sale:
-        sale_items = active_sale.products.filter(is_active=True).distinct()
-    else:
-        # Fallback: Lọc ra các sản phẩm ĐANG GIẢM GIÁ (có giá cũ lớn hơn giá hiện tại)
-        sale_items = Product.objects.filter(is_active=True, old_price__gt=F('price'))
     
-    # 2. BẮT ĐẦU XỬ LÝ SẮP XẾP TỪ URL
-    # VALIDATION: Loại bỏ khoảng trắng thừa (nếu có)
-    sort_by = request.GET.get('sort', 'hot').strip() 
+    # 1. Lấy chương trình Sale đang hoạt động (nếu có)
+    active_sale = Sale.objects.filter(active=True, start_date__lte=now, end_date__gte=now).order_by('-start_date').first()
+    
+    # 2. Sản phẩm giảm giá theo thời gian (từ Active Sale)
+    active_sale_products = []
+    if active_sale:
+        active_sale_products = list(active_sale.products.filter(is_active=True).distinct().values_list('id', flat=True))
+    
+    # 3. Sản phẩm giảm giá sẵn (có discount_percent > 0, nhưng KHÔNG phải từ active_sale)
+    permanent_discount_products = Product.objects.filter(
+        is_active=True,
+        discount_percent__gt=0
+    ).exclude(
+        id__in=active_sale_products
+    ).distinct()
+    
+    # Sản phẩm từ active sale
+    time_limited_products = Product.objects.filter(
+        is_active=True,
+        id__in=active_sale_products
+    ).distinct() if active_sale else Product.objects.none()
+    
+    # 4. XỬ LÝ SẮP XẾP
+    sort_by = request.GET.get('sort', 'hot').strip()
     
     if sort_by == 'asc':
-        # Giá từ thấp đến cao
-        sale_items = sale_items.order_by('price')
+        time_limited_products = time_limited_products.order_by('price')
+        permanent_discount_products = permanent_discount_products.order_by('price')
     elif sort_by == 'desc':
-        # Giá từ cao đến thấp
-        sale_items = sale_items.order_by('-price')
+        time_limited_products = time_limited_products.order_by('-price')
+        permanent_discount_products = permanent_discount_products.order_by('-price')
     else:
-        # VALIDATION: Nếu người dùng nhập linh tinh (không phải asc hay desc),
-        # tự động gán lại thành 'hot' và xếp theo khuyến mãi tốt nhất.
         sort_by = 'hot'
-        sale_items = sale_items.annotate(discount_amount=F('old_price') - F('price')).order_by('-discount_amount')
-
-    # 3. Trả về giao diện 
+        time_limited_products = time_limited_products.annotate(
+            discount_amount=F('old_price') - F('price')
+        ).order_by('-discount_amount')
+        permanent_discount_products = permanent_discount_products.order_by('-discount_percent')
+    
+    # 5. Trả về giao diện
     context = {
-        'sale_items': sale_items,
-        'current_sort': sort_by, 
         'active_sale': active_sale,
+        'time_limited_products': time_limited_products,
+        'permanent_discount_products': permanent_discount_products,
+        'current_sort': sort_by,
     }
     return render(request, 'sale.html', context)
 

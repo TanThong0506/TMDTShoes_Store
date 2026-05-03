@@ -558,15 +558,48 @@
 
     document.getElementById('btn-confirm').addEventListener('click', function() {
         const form = document.getElementById('checkout-form');
-        if (!form.checkValidity()) { form.reportValidity(); return; }
-
+        
+        // Get form values
+        const fullName = document.querySelector('input[name="full_name"]').value.trim();
+        const phone = document.querySelector('input[name="phone"]').value.trim();
+        const address = document.querySelector('textarea[name="address"]').value.trim();
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+        
+        // Validation errors
+        const errors = [];
+        
+        // Validate product selection
         const selectedKeys = getSelectedKeys();
         if (selectedKeys.length === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Bạn chưa chọn sản phẩm',
-                text: 'Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng.'
-            });
+            errors.push('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng');
+        }
+        
+        // Validate full name
+        if (!fullName) {
+            errors.push('Vui lòng nhập họ và tên');
+        } else if (fullName.length > 200) {
+            errors.push('Họ và tên không được vượt quá 200 ký tự');
+        }
+        
+        // Validate phone
+        if (!phone) {
+            errors.push('Vui lòng nhập số điện thoại');
+        } else if (!/^\d+$/.test(phone)) {
+            errors.push('Số điện thoại chỉ được chứa các chữ số');
+        } else if (phone.length < 9 || phone.length > 11) {
+            errors.push('Số điện thoại phải từ 9-11 chữ số');
+        }
+        
+        // Validate address
+        if (!address) {
+            errors.push('Vui lòng nhập địa chỉ giao hàng');
+        } else if (address.length > 1000) {
+            errors.push('Địa chỉ không được vượt quá 1000 ký tự');
+        }
+        
+        // Show errors if any
+        if (errors.length > 0) {
+            showCheckoutErrors(errors);
             return;
         }
 
@@ -586,5 +619,22 @@
             }
         });
     });
+    
+    function showCheckoutErrors(errors) {
+        let errorHtml = '<ul class="mb-0">';
+        errors.forEach(error => {
+            errorHtml += `<li>${error}</li>`;
+        });
+        errorHtml += '</ul>';
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Vui lòng kiểm tra lại thông tin',
+            html: errorHtml,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Đóng'
+        });
+    }
+
 </script>
 {% endblock %}

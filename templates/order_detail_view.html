@@ -17,7 +17,7 @@
             {% elif order.status == 'Return_Denied' %}
                 <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold">Từ chối đổi/trả</span>
             {% else %}
-                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">{{ order.get_status_display }}</span>
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">{{ order.display_status }}</span>
             {% endif %}
         </div>
         <div class="card-body p-4">
@@ -28,6 +28,19 @@
                     <p class="mb-1"><strong>Số điện thoại:</strong> {{ order.phone }}</p>
                     <p class="mb-1"><strong>Địa chỉ giao hàng:</strong> {{ order.address }}</p>
                     <p class="mb-1"><strong>Thanh toán:</strong> {{ order.payment_method }}</p>
+                    <p class="mb-1"><strong>Trạng thái hiển thị:</strong> {{ order.display_status }}</p>
+                    {% if order.return_reason %}
+                    <div class="alert alert-warning mt-3 mb-2">
+                        <strong>Lời nhắn của bạn:</strong><br>
+                        {{ order.return_reason }}
+                    </div>
+                    {% endif %}
+                    {% if order.return_status_message %}
+                    <div class="alert alert-info mt-3 mb-0">
+                        <strong>Phản hồi từ shop:</strong><br>
+                        {{ order.return_status_message }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-6 text-md-end">
                     <h5 class="fw-bold border-bottom pb-2 text-primary"><i class="fas fa-clock me-2"></i>Thời gian</h5>

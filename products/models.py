@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 # --- BRANDS ---
 class Brand(models.Model):
@@ -39,6 +41,11 @@ class Size(models.Model):
 
 # --- PRODUCT ---
 class Product(models.Model):
+    """Mô hình sản phẩm.
+
+    Fields cơ bản: `name`, `brand`, `category`, `sizes`, `price`, `old_price`,... 
+    Các helper method dùng trong view và template để tính phần trăm giảm/gia sau giảm.
+    """
     name = models.CharField(max_length=200)
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
     category = models.ManyToManyField(Category, blank=True, verbose_name="Loại sản phẩm")
@@ -156,8 +163,35 @@ class StorePolicy(models.Model):
 
 # --- SALES/PROMOTIONS ---
 class Sale(models.Model):
+    """Mô hình chương trình khuyến mãi (Sale).
+
+    Hệ thống hiện chỉ cho phép một chương trình khuyến mãi đang tồn tại.
+
+    - `discount_type`: 'percent' hoặc 'fixed'.
+    - `discount_value`: giá trị áp dụng (tùy theo `discount_type`).
+    - `sync_product_prices`: đồng bộ giá sản phẩm khi Sale được bật/tắt hoặc thay đổi danh sách sản phẩm.
+    """
+    DISCOUNT_PERCENT = 'percent'
+    DISCOUNT_FIXED = 'fixed'
+    DISCOUNT_TYPE_CHOICES = (
+        (DISCOUNT_PERCENT, 'Giảm theo phần trăm (%)'),
+        (DISCOUNT_FIXED, 'Giảm theo số tiền cố định (VND)'),
+    )
+
     title = models.CharField(max_length=120, default='Flash Sale', verbose_name='Tiêu đề chương trình')
     products = models.ManyToManyField(Product, blank=True, related_name='sales', verbose_name='Sản phẩm tham gia')
+    discount_type = models.CharField(
+        max_length=20,
+        choices=DISCOUNT_TYPE_CHOICES,
+        default=DISCOUNT_PERCENT,
+        verbose_name='Loại giảm giá'
+    )
+    discount_value = models.PositiveIntegerField(
+        default=10,
+        validators=[MinValueValidator(1)],
+        verbose_name='Giá trị giảm',
+        help_text='Nếu theo %, nhập từ 1-100. Nếu theo số tiền, nhập số VND cần giảm.'
+    )
     start_date = models.DateTimeField(verbose_name='Bắt đầu')
     end_date = models.DateTimeField(verbose_name='Kết thúc')
     active = models.BooleanField(default=True, verbose_name='Kích hoạt')
@@ -166,6 +200,67 @@ class Sale(models.Model):
     class Meta:
         verbose_name = 'Chương trình khuyến mãi'
         verbose_name_plural = 'Chương trình khuyến mãi'
+
+    def clean(self):
+        super().clean()
+
+        if self.start_date and self.end_date and self.end_date <= self.start_date:
+            raise ValidationError({'end_date': 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu.'})
+
+        if self.discount_type == self.DISCOUNT_PERCENT and self.discount_value > 100:
+            raise ValidationError({'discount_value': 'Giảm theo phần trăm chỉ được từ 1 đến 100.'})
+
+        conflict_qs = Sale.objects.exclude(pk=self.pk)
+        if conflict_qs.exists():
+            raise ValidationError('Chỉ được tạo tối đa 1 chương trình khuyến mãi. Hãy sửa chương trình hiện có.')
+
+    def is_currently_active(self):
+        """True nếu hiện tại đang trong khoảng start_date..end_date và active=True."""
+        now = timezone.now()
+        return self.active and self.start_date <= now <= self.end_date
+
+    def _discount_amount(self, base_price):
+        """Tính số tiền giảm (VND) dựa trên `discount_type` và `discount_value`."""
+        if self.discount_type == self.DISCOUNT_PERCENT:
+            return int(base_price * self.discount_value / 100)
+        return int(self.discount_value)
+
+    def sync_product_prices(self, previous_product_ids=None):
+        """Đồng bộ lại giá sản phẩm khi Sale thay đổi.
+
+        - Nếu sản phẩm trước đó đã có `old_price`, sẽ khôi phục `price` từ `old_price` trước khi áp chương trình mới.
+        - Sau đó nếu Sale đang active, áp giá mới lên các sản phẩm tham gia.
+
+        `previous_product_ids` dùng để biết những sản phẩm bị ảnh hưởng khi admin thay đổi danh sách.
+        """
+        previous_product_ids = set(previous_product_ids or [])
+        current_product_ids = set(self.products.values_list('id', flat=True))
+        affected_product_ids = previous_product_ids | current_product_ids
+
+        if affected_product_ids:
+            for product in Product.objects.filter(id__in=affected_product_ids):
+                if product.old_price is not None:
+                    product.price = product.old_price
+                    product.old_price = None
+                    product.discount_percent = None
+                    product.save(update_fields=['price', 'old_price', 'discount_percent'])
+
+        if not self.is_currently_active():
+            return
+
+        for product in self.products.filter(is_active=True):
+            base_price = int(product.price)
+            discount_amount = self._discount_amount(base_price)
+            new_price = max(base_price - discount_amount, 0)
+
+            if new_price >= base_price:
+                continue
+
+            discount_percent = int(round(((base_price - new_price) / base_price) * 100)) if base_price > 0 else 0
+            product.old_price = base_price
+            product.price = new_price
+            product.discount_percent = min(discount_percent, 100)
+            product.save(update_fields=['old_price', 'price', 'discount_percent'])
 
     def __str__(self):
         return f"{self.title} ({self.start_date.date()} - {self.end_date.date()})"
