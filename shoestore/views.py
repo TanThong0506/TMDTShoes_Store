@@ -43,6 +43,9 @@ def home(request):
 def help_page(request):
     return render(request, 'help.html')
 
+def return_policy_page(request):
+    return render(request, 'return_policy.html')
+
 def sale_page(request):
     sale_items = Product.objects.filter(old_price__gt=0).order_by('-id')
     return render(request, 'sale.html', {'sale_items': sale_items})

@@ -18,6 +18,9 @@ urlpatterns = [
     # Trang trợ giúp 
     path('help/', views.help_page, name='help'), 
     
+    # Chính sách đổi trả
+    path('return-policy/', views.return_policy_page, name='return_policy'),
+    
     # ĐÃ SỬA: Gọi hàm sale_page từ product_views
     path('sale/', product_views.sale_page, name='sale'),
     
