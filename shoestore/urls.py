@@ -21,6 +21,9 @@ urlpatterns = [
     # Chính sách đổi trả
     path('return-policy/', views.return_policy_page, name='return_policy'),
     
+    # Liên hệ
+    path('contact/', views.contact_page, name='contact'),
+    
     # ĐÃ SỬA: Gọi hàm sale_page từ product_views
     path('sale/', product_views.sale_page, name='sale'),
     
