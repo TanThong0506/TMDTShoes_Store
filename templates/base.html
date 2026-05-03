@@ -458,16 +458,40 @@
     </div>
 </footer>
 
-<!-- Footer scripts: newsletter (no backend) and back-to-top -->
+<!-- Footer scripts: newsletter and back-to-top -->
 <script>
     document.getElementById('footer-newsletter').addEventListener('submit', function(e){
         e.preventDefault();
-        // Simple UX feedback. Hook this to backend endpoint if available.
+        const emailInput = this.querySelector('input[type="email"]');
+        const email = emailInput.value;
         const btn = this.querySelector('button');
         const old = btn.innerText;
-        btn.innerText = 'Đã đăng ký';
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         btn.disabled = true;
-        setTimeout(()=>{ btn.innerText = old; btn.disabled = false; }, 2000);
+
+        fetch('/api/subscribe/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Django require CSRF although it's csrf_exempt in view
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                btn.innerText = 'Đã đăng ký';
+                emailInput.value = '';
+            } else {
+                btn.innerText = 'Lỗi!';
+            }
+            setTimeout(()=>{ btn.innerText = old; btn.disabled = false; }, 2000);
+        })
+        .catch(err => {
+            btn.innerText = 'Lỗi!';
+            setTimeout(()=>{ btn.innerText = old; btn.disabled = false; }, 2000);
+        });
     });
 
     document.getElementById('back-to-top').addEventListener('click', function(e){

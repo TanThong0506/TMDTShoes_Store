@@ -58,4 +58,21 @@ class UserProfile(models.Model):
         verbose_name_plural = "Thông tin cá nhân"
 
     def __str__(self):
-        return f"Profile của {self.user.username}"
+        return f"Profile của {self.user.username}"
+
+
+# ============================================================
+# PHẦN THÊM MỚI: MODEL LƯU TRỮ DANH SÁCH ĐĂNG KÝ NHẬN TIN
+# ============================================================
+class Newsletter(models.Model):
+    email = models.EmailField(unique=True, verbose_name="Địa chỉ Email")
+    subscribed_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đăng ký")
+    is_active = models.BooleanField(default=True, verbose_name="Đang hoạt động")
+
+    class Meta:
+        ordering = ['-subscribed_at']
+        verbose_name = "Người đăng ký nhận tin"
+        verbose_name_plural = "Danh sách Đăng ký nhận tin"
+
+    def __str__(self):
+        return self.email

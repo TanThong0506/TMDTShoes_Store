@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 # SỬ DỤNG THƯ VIỆN GROQ (SIÊU NHANH & MIỄN PHÍ)
 from groq import Groq
 
-from users.models import ChatMessage
+from users.models import ChatMessage, Newsletter
 from products.models import Product, Category, Brand 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,23 @@ def clean_text_for_db(text):
         return ""
     # Chỉ giữ lại các ký tự thuộc chuẩn BMP (bao gồm tiếng Việt), loại bỏ emoji
     return ''.join(c for c in text if ord(c) < 0x10000)
+
+@csrf_exempt
+def subscribe_newsletter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip()
+            if not email:
+                return JsonResponse({'success': False, 'error': 'Vui lòng nhập email hợp lệ.'}, status=400)
+            
+            # Lưu email vào Database (nếu đã tồn tại sẽ bị bỏ qua do unique=True, ta có thể dùng get_or_create)
+            Newsletter.objects.get_or_create(email=email)
+            return JsonResponse({'success': True, 'message': 'Đăng ký nhận tin thành công!'})
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            return JsonResponse({'success': False, 'error': 'Đã xảy ra lỗi hệ thống.'}, status=500)
+    return JsonResponse({'success': False, 'error': 'Phương thức không hợp lệ.'}, status=405)
 
 
 # ==========================================

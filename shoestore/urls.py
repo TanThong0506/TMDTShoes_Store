@@ -27,6 +27,9 @@ urlpatterns = [
     # Liên hệ
     path('contact/', views.contact_page, name='contact'),
     
+    # API Đăng ký nhận tin
+    path('api/subscribe/', views.subscribe_newsletter, name='subscribe_newsletter'),
+    
     # ĐÃ SỬA: Gọi hàm sale_page từ product_views
     path('sale/', product_views.sale_page, name='sale'),
     
