@@ -46,6 +46,9 @@ def help_page(request):
 def return_policy_page(request):
     return render(request, 'return_policy.html')
 
+def warranty_policy_page(request):
+    return render(request, 'warranty_policy.html')
+
 def contact_page(request):
     return render(request, 'contact.html')
 
