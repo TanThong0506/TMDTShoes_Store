@@ -21,6 +21,9 @@ urlpatterns = [
     # Chính sách đổi trả
     path('return-policy/', views.return_policy_page, name='return_policy'),
     
+    # Chính sách bảo hành
+    path('warranty-policy/', views.warranty_policy_page, name='warranty_policy'),
+    
     # Liên hệ
     path('contact/', views.contact_page, name='contact'),
     
