@@ -159,7 +159,7 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="card checkout-summary shadow-sm border-0 sticky-top rounded-4 overflow-hidden" style="top: 20px;">
+                <div class="card checkout-summary checkout-summary-sticky shadow-sm border-0 rounded-4 overflow-hidden">
                     <div class="card-header checkout-summary-header text-white py-3 py-lg-4 text-center border-0">
                         <p class="checkout-summary-label mb-1">TÓM TẮT ĐƠN HÀNG</p>
                         <h5 class="mb-0 fw-bold">Đơn hàng của bạn</h5>
@@ -288,6 +288,12 @@
     .checkout-card,
     .checkout-summary {
         box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07) !important;
+    }
+
+    .checkout-summary-sticky {
+        position: sticky;
+        top: 96px;
+        align-self: flex-start;
     }
 
     .checkout-card-header,
@@ -458,6 +464,11 @@
 
         .tracker-line {
             width: 1.25rem;
+        }
+
+        .checkout-summary-sticky {
+            position: static;
+            top: auto;
         }
     }
 

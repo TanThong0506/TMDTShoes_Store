@@ -82,9 +82,35 @@
     flex-wrap: wrap;
   }
   @media print {
-    #header, #nav-sidebar, .breadcrumbs, .submit-row, .object-tools, .toolbar, .module, .button, .login, footer { display: none !important; }
-    .invoice-wrap { margin: 0; border: 0; box-shadow: none; }
-    body { background: #fff; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+    }
+
+    body * {
+      visibility: hidden !important;
+    }
+
+    .invoice-wrap,
+    .invoice-wrap * {
+      visibility: visible !important;
+    }
+
+    .invoice-wrap {
+      position: absolute;
+      inset: 0;
+      margin: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      width: 100% !important;
+      padding: 24px !important;
+    }
+
+    .invoice-actions {
+      display: none !important;
+    }
   }
 </style>
 {% endblock %}
