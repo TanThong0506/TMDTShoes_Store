@@ -1,5 +1,25 @@
 from django.db import models
+from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 from products.models import Product
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã giảm giá")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Số tiền giảm (VND)")
+    valid_from = models.DateTimeField(verbose_name="Bắt đầu từ")
+    valid_to = models.DateTimeField(verbose_name="Đến ngày")
+    active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+
+    class Meta:
+        verbose_name = "Mã giảm giá"
+        verbose_name_plural = "Mã giảm giá"
+
+    def __str__(self):
+        return self.code
+
+    def is_valid(self):
+        now = timezone.now()
+        return self.active and self.valid_from <= now <= self.valid_to
 
 
 class PaymentMethodOption(models.Model):
@@ -47,6 +67,14 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     return_reason = models.TextField(blank=True, null=True, verbose_name="Lý do đổi/trả")
     return_response = models.TextField(blank=True, null=True, verbose_name="Phản hồi đổi/trả")
+    
+    # Coupon fields
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Tiền giảm giá")
+    
+    # VNPay fields
+    transaction_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="Mã giao dịch (VNPay)")
+    payment_status = models.CharField(max_length=50, blank=True, null=True, verbose_name="Trạng thái cổng thanh toán")
 
     @property
     def can_return(self):

@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,8 +32,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Hosts
-_hosts = os.getenv('ALLOWED_HOSTS', '')
-if _hosts:
+_hosts = os.getenv('ALLOWED_HOSTS', '*')
+if _hosts == '*':
+    ALLOWED_HOSTS = ['*']
+elif _hosts:
     ALLOWED_HOSTS = [h.strip() for h in _hosts.split(',') if h.strip()]
 else:
     # Safe defaults for local development and Django test client.
@@ -60,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -95,14 +99,11 @@ WSGI_APPLICATION = 'shoestore.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'shoe_store'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '123456'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -194,6 +195,9 @@ STATICFILES_DIRS = [
 
 # Nơi gom file khi chạy lệnh collectstatic (để sửa lỗi mày vừa gặp)
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Cấu hình WhiteNoise nén và cache static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ==========================================
 # CẤU HÌNH THƯ MỤC LƯU ẢNH (MEDIA)
 # ==========================================

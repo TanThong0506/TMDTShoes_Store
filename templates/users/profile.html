@@ -1,170 +1,345 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Thông tin cá nhân - Shoe Store{% endblock %}
+{% block title %}Tài khoản của tôi - Shoe Store{% endblock %}
 
 {% block content %}
 <style>
-    .profile-section {
-        background-color: #f4f5f7;
-        border-radius: 15px;
-        padding: 40px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
     }
-    .profile-card {
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        height: 100%;
-        border: 1px solid #eaeaea;
-    }
-    .profile-title {
-        font-weight: 800;
-        text-transform: uppercase;
-        color: #333;
-        margin-bottom: 25px;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #ffc107;
-        display: inline-block;
-        padding-bottom: 5px;
-    }
-    .form-label {
-        font-weight: 600;
+    .nav-pills-custom .nav-link {
         color: #555;
-        font-size: 0.9rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 12px 20px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .nav-pills-custom .nav-link.active {
+        color: #fff;
+        background: #000;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .nav-pills-custom .nav-link:hover:not(.active) {
+        background: #e9ecef;
+    }
+    .dashboard-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        border: 1px solid #eaeaea;
+        padding: 30px;
+    }
+    .address-card {
+        border: 2px solid #eaeaea;
+        border-radius: 10px;
+        padding: 20px;
+        height: 100%;
+        position: relative;
+        transition: all 0.3s;
+    }
+    .address-card.default-address {
+        border-color: #28a745;
+        background-color: #f8fff9;
+    }
+    .address-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    .default-badge {
+        position: absolute;
+        top: -12px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .order-status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
     }
     .form-control-custom {
         background-color: #fafafa;
         border: 1px solid #ddd;
-        color: #333;
         border-radius: 8px;
-        padding: 12px 15px;
-        transition: all 0.3s ease;
+        padding: 10px 15px;
     }
     .form-control-custom:focus {
-        background-color: #fff;
-        border-color: #ffc107;
-        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
-        color: #000;
+        border-color: #000;
+        box-shadow: none;
     }
-    .form-control-custom:disabled {
-        background-color: #e9ecef;
-        color: #6c757d;
-        border-color: #ddd;
-    }
-    .btn-save {
-        background: linear-gradient(45deg, #ffc107, #ff9800);
+    .btn-black {
+        background: #000;
         color: #fff;
-        border: none;
-        border-radius: 25px;
-        padding: 12px 30px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+        border-radius: 8px;
+        padding: 10px 25px;
+        font-weight: 600;
     }
-    .btn-save:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
-    }
-    .section-icon {
-        color: #ffc107;
-        margin-right: 10px;
+    .btn-black:hover {
+        background: #333;
+        color: #fff;
     }
 </style>
 
-<div class="container py-5">
-    <div class="profile-section mx-auto" style="max-width: 1000px;">
-        <h2 class="text-center mb-5 profile-title" style="border:none; border-bottom: 3px solid #ffc107;">HỒ SƠ CỦA TÔI</h2>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+<div class="container py-5 dashboard-container">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold text-uppercase mb-0">Tài khoản của tôi</h2>
+            <p class="text-muted mt-2">Xin chào, <strong>{{ user.first_name }} {{ user.last_name }}</strong>!</p>
+        </div>
+    </div>
 
-        <div class="row g-4">
-            <!-- Cập nhật thông tin cá nhân -->
-            <div class="col-lg-6">
-                <div class="profile-card">
-                    <h5 class="fw-bold mb-4" style="color: #333;"><i class="fas fa-user-circle section-icon"></i> THÔNG TIN CHUNG</h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="update_profile" value="1">
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Tên đăng nhập</label>
-                            <input type="text" class="form-control form-control-custom" value="{{ user.username }}" disabled>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Họ và Tên lót</label>
-                                <input type="text" name="last_name" class="form-control form-control-custom" value="{{ user.last_name }}" placeholder="Ví dụ: Nguyễn Văn" required>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Tên</label>
-                                <input type="text" name="first_name" class="form-control form-control-custom" value="{{ user.first_name }}" placeholder="Ví dụ: A" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control form-control-custom" value="{{ user.email }}" placeholder="Ví dụ: email@domain.com" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Số điện thoại</label>
-                            <input type="text" name="phone" class="form-control form-control-custom" value="{{ request.user.userprofile.phone|default:'' }}" placeholder="Nhập số điện thoại...">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label">Địa chỉ giao hàng mặc định</label>
-                            <textarea name="address" class="form-control form-control-custom" rows="3" placeholder="Nhập địa chỉ của bạn...">{{ request.user.userprofile.address|default:'' }}</textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-save w-100">
-                            <i class="fas fa-save me-2"></i> Lưu Thông Tin
-                        </button>
-                    </form>
-                </div>
+    {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
             </div>
+        </div>
+    {% endif %}
 
-            <!-- Đổi mật khẩu -->
-            <div class="col-lg-6">
-                <div class="profile-card">
-                    <h5 class="fw-bold mb-4" style="color: #333;"><i class="fas fa-shield-alt section-icon"></i> ĐỔI MẬT KHẨU</h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="change_password" value="1">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3">
+            <div class="nav flex-column nav-pills nav-pills-custom" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active text-start" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-selected="true">
+                    <i class="fas fa-user me-2 w-20px text-center"></i> Thông tin cá nhân
+                </button>
+                <button class="nav-link text-start" id="v-pills-address-tab" data-bs-toggle="pill" data-bs-target="#v-pills-address" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-map-marker-alt me-2 w-20px text-center"></i> Sổ địa chỉ ({{ addresses.count }})
+                </button>
+                <button class="nav-link text-start" id="v-pills-orders-tab" data-bs-toggle="pill" data-bs-target="#v-pills-orders" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-shopping-bag me-2 w-20px text-center"></i> Đơn hàng của tôi
+                </button>
+                <a href="{% url 'products:wishlist' %}" class="nav-link text-start text-decoration-none">
+                    <i class="fas fa-heart me-2 w-20px text-center"></i> Danh sách yêu thích ({{ wishlist_count }})
+                </a>
+                <a href="{% url 'logout' %}" class="nav-link text-start text-danger mt-4 bg-white border border-danger">
+                    <i class="fas fa-sign-out-alt me-2 w-20px text-center"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="col-lg-9">
+            <div class="tab-content" id="v-pills-tabContent">
+                
+                <!-- TAB: THÔNG TIN CÁ NHÂN -->
+                <div class="tab-pane fade show active" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+                    <div class="dashboard-card">
+                        <h4 class="fw-bold mb-4 border-bottom pb-3">Hồ sơ cá nhân</h4>
                         
-                        <div class="mb-3">
-                            <label class="form-label">Mật khẩu hiện tại</label>
-                            <input type="password" name="old_password" class="form-control form-control-custom" placeholder="Nhập mật khẩu cũ..." required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Mật khẩu mới</label>
-                            <input type="password" name="new_password" class="form-control form-control-custom" placeholder="Nhập mật khẩu mới..." required>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label">Xác nhận mật khẩu mới</label>
-                            <input type="password" name="confirm_password" class="form-control form-control-custom" placeholder="Nhập lại mật khẩu mới..." required>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-save w-100">
-                            <i class="fas fa-key me-2"></i> Cập Nhật Mật Khẩu
-                        </button>
-                    </form>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="update_profile" value="1">
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Tên đăng nhập</label>
+                                    <input type="text" class="form-control form-control-custom" value="{{ user.username }}" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Email</label>
+                                    <input type="email" name="email" class="form-control form-control-custom" value="{{ user.email }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Họ và Tên lót</label>
+                                    <input type="text" name="last_name" class="form-control form-control-custom" value="{{ user.last_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Tên</label>
+                                    <input type="text" name="first_name" class="form-control form-control-custom" value="{{ user.first_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Số điện thoại</label>
+                                    <input type="text" name="phone" class="form-control form-control-custom" value="{{ profile.phone|default:'' }}">
+                                </div>
+                                
+                                <div class="col-12 mt-4">
+                                    <h5 class="fw-bold mb-3">Đổi mật khẩu</h5>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Mật khẩu hiện tại</label>
+                                    <input type="password" name="old_password" class="form-control form-control-custom" placeholder="Nhập nếu muốn đổi mật khẩu">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mật khẩu mới</label>
+                                    <input type="password" name="new_password" class="form-control form-control-custom">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Xác nhận mật khẩu mới</label>
+                                    <input type="password" name="confirm_password" class="form-control form-control-custom">
+                                </div>
+                                
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-black w-100">LƯU THAY ĐỔI</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- TAB: SỔ ĐỊA CHỈ -->
+                <div class="tab-pane fade" id="v-pills-address" role="tabpanel" aria-labelledby="v-pills-address-tab">
+                    <div class="dashboard-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                            <h4 class="fw-bold mb-0">Sổ địa chỉ</h4>
+                            {% if addresses.count < 5 %}
+                            <button class="btn btn-black btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                <i class="fas fa-plus"></i> Thêm địa chỉ mới
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-4">
+                            {% for addr in addresses %}
+                            <div class="col-md-6">
+                                <div class="address-card {% if addr.is_default %}default-address{% endif %}">
+                                    {% if addr.is_default %}
+                                    <span class="default-badge">Mặc định</span>
+                                    {% endif %}
+                                    <h5 class="fw-bold mb-2">{{ addr.full_name }}</h5>
+                                    <div class="mb-1"><span class="badge bg-secondary mb-2">{{ addr.label }}</span></div>
+                                    <p class="mb-1"><i class="fas fa-phone-alt text-muted me-2"></i> {{ addr.phone }}</p>
+                                    <p class="mb-3 text-muted" style="min-height: 48px;"><i class="fas fa-map-marker-alt text-muted me-2"></i> {{ addr.address }}</p>
+                                    
+                                    <div class="d-flex gap-2">
+                                        {% if not addr.is_default %}
+                                        <form method="POST" action="{% url 'set_default_address' addr.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-success btn-sm">Đặt mặc định</button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="POST" action="{% url 'delete_address' addr.id %}" onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12 text-center py-4">
+                                <p class="text-muted">Bạn chưa lưu địa chỉ nào.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: ĐƠN HÀNG -->
+                <div class="tab-pane fade" id="v-pills-orders" role="tabpanel" aria-labelledby="v-pills-orders-tab">
+                    <div class="dashboard-card">
+                        <h4 class="fw-bold mb-4 border-bottom pb-3">Lịch sử đơn hàng</h4>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Ngày đặt</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Chi tiết</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td class="fw-bold">#{{ order.id }}</td>
+                                        <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td class="fw-bold text-danger">{{ order.total_price|floatformat:0|intcomma }}₫</td>
+                                        <td>
+                                            {% if order.status == 'Pending' %}
+                                            <span class="badge bg-warning text-dark order-status-badge">Chờ xử lý</span>
+                                            {% elif order.status == 'Processing' %}
+                                            <span class="badge bg-info text-dark order-status-badge">Đang xử lý</span>
+                                            {% elif order.status == 'Shipped' %}
+                                            <span class="badge bg-primary order-status-badge">Đang giao</span>
+                                            {% elif order.status == 'Completed' %}
+                                            <span class="badge bg-success order-status-badge">Hoàn thành</span>
+                                            {% elif order.status == 'Cancelled' %}
+                                            <span class="badge bg-danger order-status-badge">Đã hủy</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary order-status-badge">{{ order.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'products:order_detail' order.id %}" class="btn btn-sm btn-outline-dark">Xem</a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">Bạn chưa có đơn hàng nào.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
+
+<!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Thêm địa chỉ mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'add_address' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Loại địa chỉ (Nhãn)</label>
+                        <select name="label" class="form-select form-control-custom">
+                            <option value="Nhà">Nhà riêng</option>
+                            <option value="Cơ quan">Cơ quan / Văn phòng</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
+                        <input type="text" name="full_name" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                        <input type="text" name="phone" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ chi tiết <span class="text-danger">*</span></label>
+                        <textarea name="address" class="form-control form-control-custom" rows="3" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="is_default" id="is_default">
+                        <label class="form-check-label" for="is_default">
+                            Đặt làm địa chỉ mặc định
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-black">Lưu địa chỉ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

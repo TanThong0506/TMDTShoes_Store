@@ -82,6 +82,39 @@
                         <h5 class="mb-0 fw-bold text-white"><i class="fas fa-map-marker-alt me-2"></i>Thông tin nhận hàng</h5>
                     </div>
                     <div class="card-body p-4 p-lg-4 bg-white">
+                        {% if user_addresses %}
+                        <div class="mb-4 pb-4 border-bottom">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Chọn từ Sổ địa chỉ</label>
+                            <select class="form-select" id="address-select" onchange="autoFillAddress(this)">
+                                <option value="">-- Nhập địa chỉ mới --</option>
+                                {% for addr in user_addresses %}
+                                <option value="{{ addr.id }}" data-fullname="{{ addr.full_name }}" data-phone="{{ addr.phone }}" data-address="{{ addr.address }}" {% if addr.is_default %}selected{% endif %}>
+                                    {{ addr.label }} - {{ addr.full_name }} ({{ addr.phone }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <script>
+                        function autoFillAddress(select) {
+                            var option = select.options[select.selectedIndex];
+                            var fn = option.getAttribute('data-fullname') || '';
+                            var p = option.getAttribute('data-phone') || '';
+                            var a = option.getAttribute('data-address') || '';
+                            
+                            document.querySelector('input[name="full_name"]').value = fn;
+                            document.querySelector('input[name="phone"]').value = p;
+                            document.querySelector('textarea[name="address"]').value = a;
+                        }
+                        
+                        // Auto-fill on load if default address is selected
+                        document.addEventListener("DOMContentLoaded", function() {
+                            var select = document.getElementById("address-select");
+                            if (select && select.value) {
+                                autoFillAddress(select);
+                            }
+                        });
+                        </script>
+                        {% endif %}
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold small text-uppercase text-muted">Họ và tên</label>
@@ -154,6 +187,19 @@
                             </div>
                         </div>
 
+                        <div class="payment-item p-3 mt-3 rounded-4 border cursor-pointer" onclick="selectPayment('vnpay')">
+                            <div class="d-flex align-items-center">
+                                <input class="form-check-input m-0" type="radio" name="payment_method" id="vnpay" value="VNPAY">
+                                <div class="ms-3 d-flex align-items-center flex-grow-1">
+                                    <div class="payment-icon me-3 bg-light"><img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" height="24"></div>
+                                    <div>
+                                        <strong class="d-block">Thanh toán qua VNPAY</strong>
+                                        <small class="text-muted">Chấp nhận thẻ ATM nội địa, Visa/Mastercard và App ngân hàng.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -176,6 +222,16 @@
                         <div class="summary-note mb-3">
                             <i class="fas fa-shield-alt me-2"></i> Thanh toán an toàn, xác nhận nhanh, hỗ trợ kiểm tra đơn trước khi gửi.
                         </div>
+                        
+                        <div class="coupon-section mb-4 border-top pt-3">
+                            <label class="form-label fw-bold small text-muted">Mã giảm giá</label>
+                            <div class="input-group">
+                                <input type="text" id="coupon-input" name="coupon_code" class="form-control checkout-input" placeholder="Nhập mã">
+                                <button class="btn btn-dark px-3" type="button" id="btn-apply-coupon">Áp dụng</button>
+                            </div>
+                            <div id="coupon-message" class="small mt-2"></div>
+                        </div>
+
                         <button type="button" class="btn btn-danger w-100 py-3 fw-bold shadow-sm btn-confirm-checkout" id="btn-confirm">XÁC NHẬN ĐẶT HÀNG</button>
                     </div>
                 </div>
@@ -507,6 +563,8 @@
         return parseFloat(String(value || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
     }
 
+    let discountAmount = 0;
+
     function updateCheckoutSummary() {
         const checkedItems = document.querySelectorAll('.checkout-item:checked');
         let total = 0;
@@ -517,10 +575,37 @@
             selectedKeys.push(item.value);
         });
 
+        let finalTotal = Math.max(0, total - discountAmount);
+
         document.getElementById('selected-count').textContent = checkedItems.length;
-        document.getElementById('selected-total').textContent = formatMoney(total);
+        document.getElementById('selected-total').textContent = formatMoney(finalTotal);
         document.getElementById('selected-items-input').value = selectedKeys.join(',');
     }
+    
+    document.getElementById('btn-apply-coupon').addEventListener('click', function() {
+        const code = document.getElementById('coupon-input').value.trim();
+        const msgBox = document.getElementById('coupon-message');
+        if(!code) return;
+        
+        fetch("{% url 'orders:apply_coupon' %}", {
+            method: "POST",
+            body: JSON.stringify({ code: code }),
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                discountAmount = data.discount_amount;
+                msgBox.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
+                updateCheckoutSummary();
+            } else {
+                discountAmount = 0;
+                msgBox.innerHTML = `<span class="text-danger fw-bold"><i class="fas fa-exclamation-circle"></i> ${data.message}</span>`;
+                updateCheckoutSummary();
+            }
+        });
+    });
 
     function getSelectedKeys() {
         return Array.from(document.querySelectorAll('.checkout-item:checked')).map((item) => item.value);

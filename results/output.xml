@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.2.2 (Python 3.12.5 on win32)" generated="2026-06-09T13:45:41.164947" rpa="false" schemaversion="5">
+<suite id="s1" name="Robot" source="E:\webthuctap\Shoes_Store\tests\robot">
+<suite id="s1-s1" name="Cart Tests" source="E:\webthuctap\Shoes_Store\tests\robot\cart_tests.robot">
+<test id="s1-s1-t1" name="Add Product To Cart" line="12">
+<kw name="Open Browser To Home Page" type="SETUP">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:41.436854" level="INFO">Opening browser 'Chrome' to base url 'http://127.0.0.1:8000/'.</msg>
+<arg>${HOME_URL}</arg>
+<arg>${BROWSER}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-06-09T13:45:41.436326" elapsed="2.965240"/>
+</kw>
+<kw name="Maximize Browser Window" owner="SeleniumLibrary">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" start="2026-06-09T13:45:44.401961" elapsed="0.034752"/>
+</kw>
+<status status="PASS" start="2026-06-09T13:45:41.435193" elapsed="3.001520"/>
+</kw>
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:44.437716" level="INFO">Opening url 'http://127.0.0.1:8000/users/login/'</msg>
+<arg>http://127.0.0.1:8000/users/login/</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-06-09T13:45:44.436713" elapsed="0.068696"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:44.506644" level="INFO">Typing text 'testuser1' into text field 'name=username'.</msg>
+<arg>name=username</arg>
+<arg>testuser1</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-06-09T13:45:44.505918" elapsed="0.195456"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:44.702383" level="INFO">Typing text 'Test@1234' into text field 'name=password'.</msg>
+<arg>name=password</arg>
+<arg>Test@1234</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-06-09T13:45:44.702383" elapsed="0.118504"/>
+</kw>
+<kw name="Scroll Element Into View" owner="SeleniumLibrary">
+<arg>css=button[type="submit"]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" start="2026-06-09T13:45:44.820887" elapsed="0.629715"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:45.452624" level="INFO">Clicking button 'css=button[type="submit"]'.</msg>
+<arg>css=button[type="submit"]</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-06-09T13:45:45.451620" elapsed="0.509552"/>
+</kw>
+<kw name="Wait Until Location Is" owner="SeleniumLibrary">
+<msg time="2026-06-09T13:45:51.452157" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-39.png"&gt;&lt;img src="selenium-screenshot-39.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-09T13:45:51.452157" level="FAIL">Location did not become 'http://127.0.0.1:8000/' in 5 seconds.</msg>
+<arg>http://127.0.0.1:8000/</arg>
+<arg>timeout=5s</arg>
+<doc>Waits until the current URL is ``expected``.</doc>
+<status status="FAIL" start="2026-06-09T13:45:45.963180" elapsed="5.503701">Location did not become 'http://127.0.0.1:8000/' in 5 seconds.</status>
+</kw>
+<kw name="Home Page Should Be Open">
+<status status="NOT RUN" start="2026-06-09T13:45:51.469164" elapsed="0.000000"/>
+</kw>
+<kw name="Scroll Element Into View" owner="SeleniumLibrary">
+<arg>xpath=(//div[contains(@class, 'premium-product-card')]//ancestor::a)[1]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.471260" elapsed="0.000528"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>xpath=(//div[contains(@class, 'premium-product-card')]//ancestor::a)[1]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.476537" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<arg>css=.product-title</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.477970" elapsed="0.001010"/>
+</kw>
+<kw name="Scroll Element Into View" owner="SeleniumLibrary">
+<arg>xpath=(//input[@name="size" and not(@disabled)]/following-sibling::label)[1]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.479486" elapsed="0.000000"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>xpath=(//input[@name="size" and not(@disabled)]/following-sibling::label)[1]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.479486" elapsed="0.000000"/>
+</kw>
+<kw name="Scroll Element Into View" owner="SeleniumLibrary">
+<arg>css=button.product-cart-btn</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.479486" elapsed="0.000000"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<arg>css=button.product-cart-btn</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.481054" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Element Contains" owner="SeleniumLibrary">
+<arg>id=cart-count</arg>
+<arg>1</arg>
+<arg>timeout=5s</arg>
+<doc>Waits until the element ``locator`` contains ``text``.</doc>
+<status status="NOT RUN" start="2026-06-09T13:45:51.481054" elapsed="0.000000"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-09T13:45:51.483335" elapsed="2.298116"/>
+</kw>
+<doc>Kiểm tra luồng người dùng truy cập trang chủ, chọn sản phẩm và thêm vào giỏ hàng</doc>
+<tag>Cart</tag>
+<tag>Regression</tag>
+<status status="FAIL" start="2026-06-09T13:45:41.431801" elapsed="12.349650">Location did not become 'http://127.0.0.1:8000/' in 5 seconds.</status>
+</test>
+<doc>Suite kiểm thử tự động cho chức năng Thêm vào giỏ hàng (Regression Test)</doc>
+<status status="FAIL" start="2026-06-09T13:45:41.204498" elapsed="12.577302"/>
+</suite>
+<status status="FAIL" start="2026-06-09T13:45:41.164947" elapsed="12.617360"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="1" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">Cart</stat>
+<stat pass="0" fail="1" skip="0">Regression</stat>
+</tag>
+<suite>
+<stat name="Robot" id="s1" pass="0" fail="1" skip="0">Robot</stat>
+<stat name="Cart Tests" id="s1-s1" pass="0" fail="1" skip="0">Robot.Cart Tests</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

@@ -20,7 +20,7 @@ def _get_cart_data(cart):
     total = 0
     for item_key, item_val in cart.items():
         # Trích xuất đúng số lượng bất kể là int hay dict
-        quantity = item_val['quantity'] if isinstance(item_val, dict) else item_val
+        quantity = int(item_val['quantity'] if isinstance(item_val, dict) else item_val)
         try:
             p_id = item_key.split('_')[0]
             product = Product.objects.get(id=int(p_id))
@@ -127,27 +127,34 @@ def add_to_cart(request, product_id):
                 }, status=400)
             quantity = 999
         
+        size = request.POST.get('size', 'N/A')
+        item_key = f"{product_id}_{size}"
+        
+        from products.models import ProductVariant
+        try:
+            variant = ProductVariant.objects.get(product=product, size__value=size)
+            stock_available = variant.stock
+        except ProductVariant.DoesNotExist:
+            stock_available = 0
+
         # Kiểm tra kho hàng
-        if product.stock <= 0:
+        if stock_available <= 0:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,
-                    'error': 'Sản phẩm này hiện tại không có hàng',
+                    'error': 'Sản phẩm size này hiện tại không có hàng',
                     'error_code': 'out_of_stock'
                 }, status=400)
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'status': 'error', 'error': 'out_of_stock'}, status=400)
         
-        if quantity > product.stock:
+        if quantity > stock_available:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,
-                    'error': f'Chỉ còn {product.stock} sản phẩm trong kho',
+                    'error': f'Chỉ còn {stock_available} sản phẩm size này trong kho',
                     'error_code': 'insufficient_stock'
                 }, status=400)
-        
-        size = request.POST.get('size', 'N/A')
-        item_key = f"{product_id}_{size}"
         
         cart = request.session.get('cart', {})
         
@@ -162,7 +169,7 @@ def add_to_cart(request, product_id):
         
         request.session['cart'] = cart
         # Tính tổng số lượng hiển thị trên icon
-        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+        new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
         request.session['cart_count'] = new_count
         request.session.modified = True
         
@@ -206,7 +213,7 @@ def update_cart(request, item_key=None, action=None):
     
     try:
         is_dict = isinstance(cart[item_key], dict)
-        current_qty = cart[item_key]['quantity'] if is_dict else cart[item_key]
+        current_qty = int(cart[item_key]['quantity'] if is_dict else cart[item_key])
         
         if action == 'increase':
             current_qty += 1
@@ -216,11 +223,18 @@ def update_cart(request, item_key=None, action=None):
         # Validate stock before increase
         if action == 'increase':
             p_id = item_key.split('_')[0]
-            product = Product.objects.get(id=int(p_id))
-            if current_qty > product.stock:
+            size_val = item_key.split('_')[1] if '_' in item_key else 'N/A'
+            from products.models import ProductVariant
+            try:
+                variant = ProductVariant.objects.get(product_id=int(p_id), size__value=size_val)
+                stock_available = variant.stock
+            except ProductVariant.DoesNotExist:
+                stock_available = 0
+            
+            if current_qty > stock_available:
                 return JsonResponse({
                     'success': False,
-                    'error': f'Chỉ còn {product.stock} sản phẩm trong kho',
+                    'error': f'Chỉ còn {stock_available} sản phẩm size này trong kho',
                     'error_code': 'insufficient_stock'
                 }, status=400)
         
@@ -239,7 +253,7 @@ def update_cart(request, item_key=None, action=None):
             item_total_html = intcomma(product.price * current_qty)
 
         request.session['cart'] = cart
-        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+        new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
         request.session['cart_count'] = new_count
         request.session.modified = True
         
@@ -253,10 +267,12 @@ def update_cart(request, item_key=None, action=None):
             'total_cart': intcomma(new_total_cart)
         })
     
-    except (Product.DoesNotExist, ValueError, KeyError) as e:
+    except Exception as e:
+        import traceback
+        print(f"Error updating cart: {traceback.format_exc()}")
         return JsonResponse({
             'success': False,
-            'error': 'Có lỗi xảy ra khi cập nhật giỏ hàng',
+            'error': f'Lỗi server: {str(e)}',
             'error_code': 'update_error'
         }, status=500)
 
@@ -282,7 +298,7 @@ def remove_from_cart(request, item_key=None):
         del cart[item_key]
         
         request.session['cart'] = cart
-        new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+        new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
         request.session['cart_count'] = new_count
         request.session.modified = True
         
@@ -333,7 +349,7 @@ def api_get_cart(request):
             continue
 
     total = _get_cart_data(cart)
-    cart_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+    cart_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
     return JsonResponse({'items': items, 'total': float(total), 'cart_count': cart_count})
 
 
@@ -371,7 +387,7 @@ def api_add_to_cart(request):
         cart[item_key] = quantity
 
     request.session['cart'] = cart
-    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+    new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
     request.session['cart_count'] = new_count
     request.session.modified = True
 
@@ -420,7 +436,7 @@ def api_update_cart(request):
             cart[item_key] = current_qty
 
     request.session['cart'] = cart
-    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+    new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
     request.session['cart_count'] = new_count
     request.session.modified = True
 
@@ -451,7 +467,7 @@ def api_remove_from_cart(request):
         del cart[item_key]
 
     request.session['cart'] = cart
-    new_count = sum(v['quantity'] if isinstance(v, dict) else v for v in cart.values())
+    new_count = sum(int(v['quantity'] if isinstance(v, dict) else v) for v in cart.values())
     request.session['cart_count'] = new_count
     request.session.modified = True
 

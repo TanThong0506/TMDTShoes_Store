@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Order, OrderItem
+from django.http import JsonResponse
+from .models import Order, OrderItem, Coupon
 from products.models import Product 
 from cart.models import Cart, CartItem 
 from django.contrib.auth.decorators import login_required
@@ -51,16 +52,23 @@ def checkout(request):
                 errors.append(f'Sản phẩm {product.name} không còn bán')
                 continue
             
-            # Kiểm tra kho hàng
-            if product.stock <= 0:
-                errors.append(f'Sản phẩm {product.name} hiện tại không có hàng')
-                continue
-            
-            if quantity > product.stock:
-                errors.append(f'Chỉ còn {product.stock} {product.name} trong kho')
-                continue
-            
             size = key.split('_')[1] if '_' in key else 'N/A'
+            from products.models import ProductVariant
+            try:
+                variant = ProductVariant.objects.get(product=product, size__value=size)
+                stock_available = variant.stock
+            except ProductVariant.DoesNotExist:
+                stock_available = 0
+            
+            # Kiểm tra kho hàng
+            if stock_available <= 0:
+                errors.append(f'Sản phẩm {product.name} (Size {size}) hiện tại không có hàng')
+                continue
+            
+            if quantity > stock_available:
+                errors.append(f'Chỉ còn {stock_available} {product.name} (Size {size}) trong kho')
+                continue
+            
             line_total = int(product.price) * quantity
             
             display_item = {
@@ -89,6 +97,7 @@ def checkout(request):
     context = {
         'items': items_to_display,
         'total_price': total_price,
+        'user_addresses': request.user.shipping_addresses.all(),
     }
     return render(request, 'checkout.html', context)
 
@@ -142,7 +151,7 @@ def order_create(request):
             return redirect(f'/orders/checkout/?items={item_keys_str}')
 
         # Validation for payment method
-        allowed_payment_methods = {'COD', 'BANK'}
+        allowed_payment_methods = {'COD', 'BANK', 'VNPAY'}
         if not payment_method:
             messages.error(request, 'Vui lòng chọn phương thức thanh toán.')
             return redirect(f'/orders/checkout/?items={item_keys_str}')
@@ -192,14 +201,26 @@ def order_create(request):
                     validation_errors.append(f'Sản phẩm {product.name} không còn bán')
                     continue
                 
+                size = key.split('_')[1] if '_' in key else 'N/A'
+                from products.models import ProductVariant
+                try:
+                    variant = ProductVariant.objects.get(product=product, size__value=size)
+                    stock_available = variant.stock
+                except ProductVariant.DoesNotExist:
+                    stock_available = 0
+                
                 # Kiểm tra kho hàng
-                if product.stock <= 0:
-                    validation_errors.append(f'Sản phẩm {product.name} hiện tại không có hàng')
+                if stock_available <= 0:
+                    validation_errors.append(f'Sản phẩm {product.name} (Size {size}) hiện tại không có hàng')
                     continue
                 
-                if quantity > product.stock:
-                    validation_errors.append(f'Chỉ còn {product.stock} {product.name} trong kho')
+                if quantity > stock_available:
+                    validation_errors.append(f'Chỉ còn {stock_available} {product.name} (Size {size}) trong kho')
                     continue
+                
+                # Trừ tồn kho Variant
+                variant.stock -= quantity
+                variant.save()
                 
                 line_total = int(product.price) * quantity
                 current_total += line_total
@@ -226,8 +247,21 @@ def order_create(request):
                 messages.error(request, 'Không có sản phẩm nào hợp lệ để đặt hàng.')
             return redirect('cart:cart_detail')
 
-        order.total_price = current_total
+        # Xử lý Mã giảm giá
+        coupon_code = (request.POST.get('coupon_code') or '').strip()
+        discount_amount = 0
+        if coupon_code:
+            coupon = Coupon.objects.filter(code__iexact=coupon_code).first()
+            if coupon and coupon.is_valid():
+                discount_amount = coupon.discount_amount
+                order.coupon = coupon
+                order.discount_amount = discount_amount
+
+        # Đảm bảo tổng tiền không âm
+        final_total = max(0, current_total - discount_amount)
+        order.total_price = final_total
         order.save()
+
         
         # --- ĐOẠN RESET GIỎ HÀNG VÀ CẬP NHẬT SỐ LƯỢNG ---
         
@@ -264,6 +298,24 @@ def order_create(request):
         # ----------------------------------------------
         
         request.session['last_order_id'] = order.id
+
+        if payment_method == 'VNPAY':
+            from .vnpay_utils import VNPay
+            from django.urls import reverse
+            vnp = VNPay(
+                tmn_code='S7OQQ9M9', # Mã Sandbox mẫu
+                hash_secret='QPVITQYRYEGBGGBVUXUXBOMJTZTOWMOC', # Secret mẫu
+                return_url=request.build_absolute_uri(reverse('orders:vnpay_return')),
+                vnpay_url='https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
+            )
+            payment_url = vnp.get_payment_url(
+                order_id=order.id,
+                amount=final_total,
+                order_desc=f"Thanh toan don hang {order.id}",
+                ip_address=request.META.get('REMOTE_ADDR', '127.0.0.1')
+            )
+            return redirect(payment_url)
+
         return redirect('orders:order_success')
     
     return redirect('orders:checkout')
@@ -289,3 +341,60 @@ def order_success(request):
 
     # 3. Trả về template (Đảm bảo file order_success.html của bạn có đoạn Script tự F5)
     return render(request, 'order_success.html', {'order': order})
+
+@login_required(login_url='login')
+def apply_coupon(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '').strip()
+            if not code:
+                return JsonResponse({'success': False, 'message': 'Vui lòng nhập mã giảm giá'})
+            
+            coupon = Coupon.objects.filter(code__iexact=code).first()
+            if coupon and coupon.is_valid():
+                return JsonResponse({
+                    'success': True, 
+                    'discount_amount': float(coupon.discount_amount),
+                    'message': f'Áp dụng thành công mã giảm {coupon.discount_amount} VND'
+                })
+            else:
+                return JsonResponse({'success': False, 'message': 'Mã giảm giá không hợp lệ hoặc đã hết hạn'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': 'Lỗi xử lý mã giảm giá'})
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+@login_required(login_url='login')
+def vnpay_return(request):
+    from .vnpay_utils import VNPay
+    vnp = VNPay(
+        tmn_code='S7OQQ9M9',
+        hash_secret='QPVITQYRYEGBGGBVUXUXBOMJTZTOWMOC',
+        return_url='',
+        vnpay_url=''
+    )
+    
+    if vnp.validate_response(request.GET):
+        order_id = request.GET.get('vnp_TxnRef')
+        vnp_ResponseCode = request.GET.get('vnp_ResponseCode')
+        
+        try:
+            order = Order.objects.get(id=order_id)
+            order.transaction_id = request.GET.get('vnp_TransactionNo')
+            if vnp_ResponseCode == '00':
+                order.payment_status = 'Success'
+                order.status = 'Completed'
+                order.save()
+                messages.success(request, 'Thanh toán VNPay thành công!')
+            else:
+                order.payment_status = 'Failed'
+                order.status = 'Cancelled'
+                order.save()
+                messages.error(request, 'Thanh toán VNPay thất bại hoặc bị hủy.')
+        except Order.DoesNotExist:
+            messages.error(request, 'Đơn hàng không tồn tại.')
+    else:
+        messages.error(request, 'Xác thực VNPay thất bại. Chữ ký không hợp lệ.')
+        
+    return redirect('orders:order_success')

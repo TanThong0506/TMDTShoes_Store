@@ -79,11 +79,20 @@
                         </a>
                     </p>
                     <div class="d-flex flex-wrap gap-2">
-                        {% for size in product.sizes.all %}
-                            <input type="radio" name="size" id="s-{{ size.id }}" value="{{ size.value }}" class="btn-check" required>
-                            <label class="btn btn-outline-dark px-3 fw-bold" for="s-{{ size.id }}">{{ size.value }}</label>
+                        {% for variant in product.variants.all %}
+                            {% if variant.stock > 0 %}
+                                <input type="radio" name="size" id="s-{{ variant.size.id }}" value="{{ variant.size.value }}" class="btn-check size-option" data-stock="{{ variant.stock }}" required>
+                                <label class="btn btn-outline-dark px-3 fw-bold" for="s-{{ variant.size.id }}">{{ variant.size.value }}</label>
+                            {% else %}
+                                <input type="radio" name="size" id="s-{{ variant.size.id }}" value="{{ variant.size.value }}" class="btn-check" disabled>
+                                <label class="btn btn-outline-secondary px-3 fw-bold" for="s-{{ variant.size.id }}" style="opacity: 0.5; text-decoration: line-through;" title="Hết hàng">{{ variant.size.value }}</label>
+                            {% endif %}
+                        {% empty %}
+                            <span class="text-danger small">Đang cập nhật kích thước</span>
                         {% endfor %}
                     </div>
+                    <p class="small text-danger fw-bold mt-2 mb-0" id="stock-display"></p>
+
                 </div>
 
                 <div class="row g-2 mb-4">
@@ -93,6 +102,9 @@
                     </div>
                     <div class="col-9 d-flex align-items-end">
                         <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase shadow-sm product-cart-btn">THÊM VÀO GIỎ HÀNG</button>
+                        <button type="button" class="btn btn-outline-danger py-2 fw-bold ms-2 px-3 shadow-sm" id="toggle-wishlist" data-product-id="{{ product.id }}" title="Yêu thích">
+                            <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart fs-5"></i>
+                        </button>
                     </div>
                 </div>
             </form>
@@ -155,16 +167,42 @@
 </div>
 </div>
 
-{% if recommended_products %}
+{% if same_brand_products %}
 <section class="recommended-section py-5">
     <div class="container">
         <div class="section-head text-center mb-4 mb-lg-5">
-            <p class="section-kicker mb-2">Gợi ý phù hợp</p>
-            <h4 class="section-title mb-2">Sản phẩm đề cử cho bạn</h4>
-            <p class="section-subtitle mb-0">Các lựa chọn cùng tông màu giao diện, đồng bộ với phần đánh giá và khối chi tiết sản phẩm.</p>
+            <h4 class="section-title mb-2">Sản phẩm cùng thương hiệu</h4>
         </div>
         <div class="row g-3 g-lg-4">
-            {% for rp in recommended_products %}
+            {% for rp in same_brand_products %}
+            <div class="col-6 col-md-3">
+                <a href="{% url 'products:product_detail' rp.id %}" class="text-decoration-none text-dark d-block">
+                    <div class="card h-100 border-0 list-product-card product-recommend-card">
+                        <div class="overflow-hidden position-relative" style="height:200px;">
+                            <img src="{{ rp.image.url }}" class="card-img-top object-fit-cover" style="width:100%; height:200px;">
+                        </div>
+                        <div class="card-body p-3 text-center">
+                            <p class="small text-muted mb-1">{% if rp.brand %}{{ rp.brand.name }}{% endif %}</p>
+                            <h6 class="mb-1 small fw-bold" style="height:34px; overflow:hidden">{{ rp.name }}</h6>
+                            <div class="text-danger fw-bold small">{{ rp.price|intcomma }}₫</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if related_products %}
+<section class="recommended-section py-5 bg-light">
+    <div class="container">
+        <div class="section-head text-center mb-4 mb-lg-5">
+            <h4 class="section-title mb-2">Có thể bạn thích</h4>
+        </div>
+        <div class="row g-3 g-lg-4">
+            {% for rp in related_products %}
             <div class="col-6 col-md-3">
                 <a href="{% url 'products:product_detail' rp.id %}" class="text-decoration-none text-dark d-block">
                     <div class="card h-100 border-0 list-product-card product-recommend-card">
@@ -220,7 +258,12 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                                         <div>
-                                            <h6 class="mb-1 fw-bold review-name">{{ review.user.username }}</h6>
+                                            <h6 class="mb-1 fw-bold review-name">
+                                                {{ review.user.username }}
+                                                {% if review.is_verified_purchase %}
+                                                <span class="badge bg-success ms-2 fw-normal"><i class="fas fa-check-circle"></i> Đã mua hàng</span>
+                                                {% endif %}
+                                            </h6>
                                             <div class="review-stars text-warning small">
                                                 {% for i in "12345" %}
                                                     <i class="{% if forloop.counter <= review.rating %}fas{% else %}far{% endif %} fa-star"></i>
@@ -230,6 +273,11 @@
                                         <small class="review-date text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
                                     </div>
                                     <p class="review-comment mb-0 mt-3">{{ review.comment }}</p>
+                                    {% if review.image %}
+                                    <div class="mt-2">
+                                        <img src="{{ review.image.url }}" alt="Review Image" class="img-thumbnail" style="max-height: 100px; cursor: pointer;" onclick="window.open(this.src)">
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -253,7 +301,8 @@
 
                     <div class="card-body p-4 bg-white">
                         {% if user.is_authenticated %}
-                        <form method="POST" action="{% url 'products:product_detail' product.id %}">
+                        {% if has_purchased %}
+                        <form method="POST" action="{% url 'products:product_detail' product.id %}" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="mb-4 text-center">
                                 <label class="form-label d-block fw-bold text-uppercase small text-muted mb-3">Chọn số sao</label>
@@ -269,8 +318,19 @@
                                 <label class="form-label fw-bold small text-uppercase text-muted">Nội dung đánh giá</label>
                                 <textarea name="comment" class="form-control review-textarea" rows="4" placeholder="Bạn thấy sản phẩm này thế nào?" required></textarea>
                             </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Ảnh đính kèm (Tùy chọn)</label>
+                                <input type="file" name="image" class="form-control" accept="image/*">
+                            </div>
                             <button type="submit" class="btn btn-dark w-100 fw-bold review-submit-btn">GỬI ĐÁNH GIÁ</button>
                         </form>
+                        {% else %}
+                        <div class="review-login-alert text-center p-4">
+                            <div class="review-login-icon mb-3"><i class="fas fa-shopping-bag text-warning" style="font-size: 2rem;"></i></div>
+                            <h6 class="fw-bold mb-2">Chưa thể đánh giá</h6>
+                            <p class="text-muted small mb-0">Bạn cần mua và nhận thành công sản phẩm này để có thể gửi đánh giá.</p>
+                        </div>
+                        {% endif %}
                         {% else %}
                         <div class="review-login-alert text-center p-4">
                             <div class="review-login-icon mb-3"><i class="fas fa-user-lock"></i></div>
@@ -945,6 +1005,48 @@
         
         enableZoom();
         $(window).on('resize', enableZoom);
+
+        // Hiển thị số lượng tồn kho khi chọn size
+        $('.size-option').on('change', function() {
+            var stock = $(this).data('stock');
+            var qtyInput = $('input[name="quantity"]');
+            var stockDisplay = $('#stock-display');
+            if (stock) {
+                stockDisplay.text('Còn lại ' + stock + ' sản phẩm (Vui lòng chọn số lượng không vượt quá kho)');
+                qtyInput.attr('max', stock);
+                if (parseInt(qtyInput.val()) > stock) {
+                    qtyInput.val(stock);
+                }
+            } else {
+                stockDisplay.text('');
+                qtyInput.removeAttr('max');
+            }
+        });
+
+        // Xử lý Wishlist toggle
+        $('#toggle-wishlist').on('click', function(e) {
+            e.preventDefault();
+            if (!IS_AUTH) {
+                $('#loginPromptModal').modal('show');
+                return;
+            }
+            var btn = $(this);
+            var productId = btn.data('product-id');
+            var icon = btn.find('i');
+            
+            $.ajax({
+                type: "POST",
+                url: `/products/wishlist/toggle/${productId}/`,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                success: function(response) {
+                    if (response.added) {
+                        icon.removeClass('far').addClass('fas text-danger');
+                    } else {
+                        icon.removeClass('fas text-danger').addClass('far');
+                    }
+                }
+            });
+        });
 
         $('#add-to-cart-form').on('submit', function(e) {
             e.preventDefault(); 

@@ -58,4 +58,24 @@ class UserProfile(models.Model):
         verbose_name_plural = "Thông tin cá nhân"
 
     def __str__(self):
-        return f"Profile của {self.user.username}"
+        return f"Profile của {self.user.username}"
+
+# ============================================================
+# PHẦN THÊM MỚI: SỔ ĐỊA CHỈ (ADDRESS BOOK)
+# ============================================================
+class ShippingAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipping_addresses')
+    label = models.CharField(max_length=50, verbose_name="Nhãn", help_text="VD: Nhà, Cơ quan", default="Nhà")
+    full_name = models.CharField(max_length=200, verbose_name="Họ tên người nhận")
+    phone = models.CharField(max_length=20, verbose_name="Số điện thoại")
+    address = models.TextField(verbose_name="Địa chỉ chi tiết")
+    is_default = models.BooleanField(default=False, verbose_name="Địa chỉ mặc định")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Địa chỉ giao hàng"
+        verbose_name_plural = "Địa chỉ giao hàng"
+        ordering = ['-is_default', '-created_at']
+
+    def __str__(self):
+        return f"{self.label} - {self.full_name} ({self.user.username})"

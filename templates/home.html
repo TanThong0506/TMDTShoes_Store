@@ -2,85 +2,56 @@
 {% load humanize %} 
 
 {% block content %}
-<div class="p-5 mb-5 bg-dark rounded-4 shadow-lg text-white" 
-      style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070') center/cover; min-height: 400px; display: flex; align-items: center;">
-    <div class="container text-center">
-        <h1 class="display-3 fw-bold mb-3">EVERYDAY SNEAKER</h1>
-        <p class="fs-4 mb-4">Nâng tầm phong cách mỗi ngày cùng bộ sưu tập mới nhất.</p>
-        <a href="{% url 'products:product_list' %}" class="btn btn-warning btn-lg px-5 fw-bold rounded-pill">MUA NGAY</a>
-    </div>
-</div>
-
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-danger"><i class="fas fa-fire"></i> DEAL ĐANG CHÁY</h3>
-        <a href="{% url 'sale' %}" class="text-muted small fw-bold">Xem tất cả</a>
-    </div>
-    
-    <div class="d-flex overflow-auto pb-3 gap-3 custom-scroll">
-        {% for shoe in sale_products %}
-        <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-            <div class="card border-0 shadow-sm flex-shrink-0 home-product-card" style="width: 200px;">
-                <div class="position-relative overflow-hidden" style="border-radius: 12px 12px 0 0;">
-                    {% if shoe.is_on_sale %}
-                        <span class="position-absolute top-0 start-0 badge bg-danger m-2 z-1">-{{ shoe.get_sale_percent }}%</span>
-                    {% endif %}
-                    <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 150px;">
-                </div>
-                <div class="card-body p-2 text-center">
-                    <h6 class="small fw-bold text-truncate mb-1 product-title">{{ shoe.name }}</h6>
-                    <div class="mb-0 mt-1">
-                        <span class="text-danger fw-bold">{{ shoe.price|intcomma }}<u>đ</u></span>
-                        <small class="text-muted text-decoration-line-through ms-1">{{ shoe.old_price|intcomma }}<u>đ</u></small>
-                    </div>
-                </div>
+<!-- HERO SECTION -->
+<div class="premium-hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="container position-relative z-1">
+        <div class="hero-content">
+            <h1 class="hero-title" style="color: var(--text-primary);">NÂNG TẦM <br><span class="premium-gradient-text">PHONG CÁCH</span></h1>
+            <p class="fs-4 mb-5" style="color: var(--text-secondary); max-width: 600px; line-height: 1.6;">Bộ sưu tập sneaker giới hạn với thiết kế độc bản. Khẳng định cá tính, bứt phá mọi giới hạn.</p>
+            <div class="d-flex gap-3">
+                <a href="{% url 'products:product_list' %}" class="premium-btn">
+                    Khám Phá Ngay <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="{% url 'sale' %}" class="premium-btn-outline">
+                    Xem Khuyến Mãi
+                </a>
             </div>
-        </a>
-        {% empty %}
-        <div class="w-100 text-center py-4 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
-            <i class="fas fa-fire-extinguisher text-muted fs-2 mb-2"></i>
-            <h6 class="text-muted fw-bold mb-0">Chưa có deal nào đang cháy!</h6>
-            <small class="text-muted">Bạn hãy quay lại sau để săn sale nhé.</small>
         </div>
-        {% endfor %}
     </div>
 </div>
 
-<div class="mb-5 text-center">
-    <h3 class="fw-bold mb-4 text-uppercase">Danh Mục Phổ Biến</h3> 
-    
-    <div class="marquee-container">
+<!-- CATEGORY MARQUEE -->
+<div class="py-4 mt-5" style="background: rgba(255,255,255,0.02); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border);">
+    <div class="marquee-container" style="padding: 0;">
         <div class="marquee-track">
             <div class="marquee-content">
                 {% for i in "1234"|make_list %}
                     {% for brand in brands %}
-                    <div class="brand-item">
+                    <div class="brand-item" style="padding: 0 40px;">
                         <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
-                            <div class="card bg-white border border-light shadow-sm brand-card">
-                                {% if brand.logo %}
-                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
-                                {% else %}
-                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
-                                {% endif %}
-                            </div>
+                            {% if brand.logo %}
+                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" style="height: 45px; filter: grayscale(0) opacity(0.9); transition: 0.3s; transform: scale(1);" onmouseover="this.style.filter='grayscale(0) opacity(1)'; this.style.transform='scale(1.1)';" onmouseout="this.style.filter='grayscale(0) opacity(0.9)'; this.style.transform='scale(1)';">
+                            {% else %}
+                                <h3 style="color: var(--text-secondary); text-transform: uppercase; font-weight: 800; opacity: 0.5; transition: 0.3s;" onmouseover="this.style.color='var(--accent-primary)'; this.style.opacity='1'" onmouseout="this.style.color='var(--text-secondary)'; this.style.opacity='0.5'">{{ brand.name }}</h3>
+                            {% endif %}
                         </a>
                     </div>
                     {% endfor %}
                 {% endfor %}
             </div>
-
+            <!-- Duplicate for infinite scroll -->
             <div class="marquee-content">
                 {% for i in "1234"|make_list %}
                     {% for brand in brands %}
-                    <div class="brand-item">
+                    <div class="brand-item" style="padding: 0 40px;">
                         <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="text-decoration-none">
-                            <div class="card bg-white border border-light shadow-sm brand-card">
-                                {% if brand.logo %}
-                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo-img">
-                                {% else %}
-                                    <span class="fw-bold text-muted">{{ brand.name }}</span>
-                                {% endif %}
-                            </div>
+                            {% if brand.logo %}
+                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" style="height: 45px; filter: grayscale(0) opacity(0.9); transition: 0.3s; transform: scale(1);" onmouseover="this.style.filter='grayscale(0) opacity(1)'; this.style.transform='scale(1.1)';" onmouseout="this.style.filter='grayscale(0) opacity(0.9)'; this.style.transform='scale(1)';">
+                            {% else %}
+                                <h3 style="color: var(--text-secondary); text-transform: uppercase; font-weight: 800; opacity: 0.5; transition: 0.3s;" onmouseover="this.style.color='var(--accent-primary)'; this.style.opacity='1'" onmouseout="this.style.color='var(--text-secondary)'; this.style.opacity='0.5'">{{ brand.name }}</h3>
+                            {% endif %}
                         </a>
                     </div>
                     {% endfor %}
@@ -90,165 +61,187 @@
     </div>
 </div>
 
-<div class="mb-5">
-    <h3 class="fw-bold mb-4"><i class="fas fa-star text-warning"></i> SẢN PHẨM MỚI</h3>
-    <div class="row row-cols-2 row-cols-md-4 g-4">
-        {% for shoe in latest_products %}
-        <div class="col">
-            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none text-dark">
-                <div class="card h-100 border-0 shadow-sm home-product-card">
-                    <div class="overflow-hidden" style="border-radius: 12px 12px 0 0;">
-                        <img src="{{ shoe.image.url }}" class="card-img-top object-fit-cover" style="height: 200px;">
-                    </div>
-                    <div class="card-body">
-                        {% if shoe.brand %}
-                            <p class="text-muted small mb-1 text-uppercase">{{ shoe.brand.name }}</p>
-                        {% endif %}
-                        <h6 class="fw-bold text-truncate product-title">{{ shoe.name }}</h6>
-                        
-                        <div class="mt-2">
-                            {% if shoe.is_on_sale %}
-                                <span class="text-danger fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
-                                <small class="text-muted text-decoration-line-through ms-2">{{ shoe.old_price|intcomma }}<u>đ</u></small>
-                            {% else %}
-                                <span class="text-dark fw-bold fs-5">{{ shoe.price|intcomma }}<u>đ</u></span>
+<div class="container mt-5 pt-5">
+    
+    <!-- DEAL HOT -->
+    <div class="mb-5 pb-4">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <span class="premium-gradient-text fw-bold text-uppercase" style="letter-spacing: 2px; font-size: 0.9rem;">Flash Sale</span>
+                <h2 class="fw-bold mb-0" style="font-size: 2.5rem; color: var(--text-primary);">DEAL ĐANG CHÁY <i class="fas fa-fire" style="color: var(--accent-secondary);"></i></h2>
+            </div>
+            <a href="{% url 'sale' %}" class="premium-btn-outline d-none d-md-inline-flex" style="padding: 8px 20px; font-size: 0.9rem;">Xem Tất Cả <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        
+        {% if sale_products %}
+        <div class="marquee-container pb-4" style="padding: 10px 0;">
+            <div class="marquee-track" style="gap: 20px; animation-duration: 35s;">
+                <div class="marquee-content" style="gap: 20px;">
+                    {% for i in "12"|make_list %}
+                        {% for shoe in sale_products %}
+                        <div style="width: 280px; flex-shrink: 0;">
+                            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none d-block h-100">
+                                <div class="premium-product-card">
+                                    <div class="product-img-wrapper">
+                                        {% if shoe.is_on_sale %}
+                                            <div class="sale-badge">-{{ shoe.get_sale_percent }}%</div>
+                                        {% endif %}
+                                        <img src="{{ shoe.image.url }}" alt="{{ shoe.name }}">
+                                    </div>
+                                    <div class="product-info">
+                                        {% if shoe.brand %}
+                                            <div class="product-brand">{{ shoe.brand.name }}</div>
+                                        {% endif %}
+                                        <h3 class="product-title text-truncate">{{ shoe.name }}</h3>
+                                        <div class="product-price-row">
+                                            <span class="price-current" style="color: var(--accent-primary);">{{ shoe.price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                            <span class="price-old">{{ shoe.old_price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                        </div>
+                                        <div class="btn-add-cart-floating" title="Thêm vào giỏ hàng">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                <div class="marquee-content" style="gap: 20px;">
+                    {% for i in "12"|make_list %}
+                        {% for shoe in sale_products %}
+                        <div style="width: 280px; flex-shrink: 0;">
+                            <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none d-block h-100">
+                                <div class="premium-product-card">
+                                    <div class="product-img-wrapper">
+                                        {% if shoe.is_on_sale %}
+                                            <div class="sale-badge">-{{ shoe.get_sale_percent }}%</div>
+                                        {% endif %}
+                                        <img src="{{ shoe.image.url }}" alt="{{ shoe.name }}">
+                                    </div>
+                                    <div class="product-info">
+                                        {% if shoe.brand %}
+                                            <div class="product-brand">{{ shoe.brand.name }}</div>
+                                        {% endif %}
+                                        <h3 class="product-title text-truncate">{{ shoe.name }}</h3>
+                                        <div class="product-price-row">
+                                            <span class="price-current" style="color: var(--accent-primary);">{{ shoe.price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                            <span class="price-old">{{ shoe.old_price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                        </div>
+                                        <div class="btn-add-cart-floating" title="Thêm vào giỏ hàng">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="row pb-4">
+            <div class="col-12 w-100">
+                <div class="p-5 text-center" style="background: var(--bg-surface); border: 1px dashed #ced4da; border-radius: 20px;">
+                    <i class="fas fa-ghost fa-3x mb-3" style="color: var(--text-secondary);"></i>
+                    <h4 style="color: var(--text-primary);">Chưa có deal nào!</h4>
+                    <p style="color: var(--text-secondary);">Hãy quay lại sau để săn sale nhé.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- SẢN PHẨM MỚI -->
+    <div class="mb-5 pb-5">
+        <div class="mb-5 text-center">
+            <span class="premium-gradient-text fw-bold text-uppercase" style="letter-spacing: 2px; font-size: 0.9rem;">Arrivals</span>
+            <h2 class="fw-bold mb-0" style="font-size: 2.5rem; color: var(--text-primary);">SẢN PHẨM MỚI</h2>
+        </div>
+        
+        <div class="row g-4">
+            {% for shoe in latest_products %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="{% url 'products:product_detail' shoe.id %}" class="text-decoration-none d-block h-100">
+                    <div class="premium-product-card">
+                        <div class="product-img-wrapper">
+                            <img src="{{ shoe.image.url }}" alt="{{ shoe.name }}">
+                        </div>
+                        <div class="product-info">
+                            {% if shoe.brand %}
+                                <div class="product-brand">{{ shoe.brand.name }}</div>
                             {% endif %}
+                            <h3 class="product-title text-truncate">{{ shoe.name }}</h3>
+                            <div class="product-price-row">
+                                {% if shoe.is_on_sale %}
+                                    <span class="price-current" style="color: var(--accent-primary);">{{ shoe.price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                    <span class="price-old">{{ shoe.old_price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                {% else %}
+                                    <span class="price-current">{{ shoe.price|intcomma }}<sup style="font-size:0.6em; text-decoration:underline;">đ</sup></span>
+                                {% endif %}
+                            </div>
+                            <div class="btn-add-cart-floating" title="Thêm vào giỏ hàng">
+                                <i class="fas fa-cart-plus"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </a>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5 bg-light rounded-4" style="border: 2px dashed #dee2e6;">
-            <i class="fas fa-shoe-prints text-muted fa-3x mb-3"></i>
-            <h5 class="fw-bold text-muted">Gian hàng đang cập nhật</h5>
-            <p class="text-muted mb-0">Những mẫu giày mới nhất sẽ sớm được lên kệ. Bạn hãy đón chờ nhé!</p>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<div class="row g-4 mb-5">
-    <div class="col-md-4">
-        <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100">
-            <i class="fas fa-shipping-fast text-warning fs-1 mb-3"></i>
-            <h5 class="fw-bold">Giao hàng cực nhanh</h5>
-            <p class="text-muted small mb-0">Đảm bảo đôi giày yêu thích đến tay Bạn chỉ trong 2-3 ngày làm việc.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'products:return_eligible_orders' %}" class="text-decoration-none text-dark d-block h-100">
-            <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100" style="transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                <i class="fas fa-undo text-warning fs-1 mb-3"></i>
-                <h5 class="fw-bold">Đổi trả trong 7 ngày</h5>
-                <p class="text-muted small mb-0">Không vừa size? Đừng lo, Shoe Store hỗ trợ đổi size tận nơi cho bạn.</p>
+                </a>
             </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <div class="p-4 text-center bg-white rounded-4 shadow-sm h-100" onclick="toggleWidget()" style="cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="Nhấn để mở chat">
-            <i class="fas fa-headset text-warning fs-1 mb-3"></i>
-            <h5 class="fw-bold">Hỗ trợ 24/7</h5>
-            <p class="text-muted small mb-0">Luôn lắng nghe và giải đáp thắc mắc của bạn bất kể lúc nào.</p>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="p-5 text-center" style="background: var(--bg-dark-surface); border: 1px dashed var(--glass-border); border-radius: 20px;">
+                    <i class="fas fa-box-open fa-3x mb-3" style="color: var(--text-secondary);"></i>
+                    <h4 class="text-white">Gian hàng đang cập nhật</h4>
+                    <p style="color: var(--text-secondary);">Những mẫu giày mới nhất sẽ sớm được lên kệ!</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+
+    <!-- FEATURES BANNERS -->
+    <div class="row g-4 mb-5 pb-5">
+        <div class="col-md-4">
+            <div class="p-4 text-center h-100" style="background: var(--bg-surface); border: 1px solid var(--glass-border); border-radius: 24px; transition: transform 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-10px)'; this.style.borderColor='rgba(67, 97, 238, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--glass-border)'">
+                <div style="width: 70px; height: 70px; background: rgba(67, 97, 238, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fas fa-shipping-fast fs-2" style="color: var(--accent-primary);"></i>
+                </div>
+                <h4 class="fw-bold mb-2" style="color: var(--text-primary);">Giao Hàng Siêu Tốc</h4>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Đảm bảo đôi giày yêu thích đến tay bạn trong nháy mắt.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 text-center h-100" style="background: var(--bg-surface); border: 1px solid var(--glass-border); border-radius: 24px; transition: transform 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-10px)'; this.style.borderColor='rgba(76, 201, 240, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--glass-border)'">
+                <div style="width: 70px; height: 70px; background: rgba(76, 201, 240, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fas fa-undo fs-2" style="color: var(--accent-secondary);"></i>
+                </div>
+                <h4 class="fw-bold mb-2" style="color: var(--text-primary);">Đổi Trả Miễn Phí</h4>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Không vừa size? Đừng lo, Shoe Store hỗ trợ đổi size miễn phí.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 text-center h-100" style="background: var(--bg-surface); border: 1px solid var(--glass-border); border-radius: 24px; transition: transform 0.3s; cursor: pointer;" onclick="toggleWidget()" onmouseover="this.style.transform='translateY(-10px)'; this.style.borderColor='rgba(67, 97, 238, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--glass-border)'">
+                <div style="width: 70px; height: 70px; background: rgba(67, 97, 238, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fas fa-headset fs-2" style="color: var(--accent-primary);"></i>
+                </div>
+                <h4 class="fw-bold mb-2" style="color: var(--text-primary);">Hỗ Trợ 24/7</h4>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Trợ lý ảo AI thông minh luôn túc trực để phục vụ bạn.</p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <style>
-    /* Thanh cuộn (Scrollbar) cho Deal đang cháy */
-    .custom-scroll::-webkit-scrollbar { height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    /* CSS nội bộ bổ sung cho trang Home */
+    .marquee-container { width: 100%; overflow: hidden; position: relative; }
+    .marquee-track { display: flex; width: max-content; animation: scroll-marquee 40s linear infinite; }
+    .marquee-container:hover .marquee-track { animation-play-state: paused; }
+    .marquee-content { display: flex; }
+    .brand-item { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
+    @keyframes scroll-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     
-    /* === BỘ HIỆU ỨNG HOVER XỊN XÒ CHO SẢN PHẨM === */
-    .home-product-card { 
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        border-radius: 12px;
-    }
-    
-    /* Nổi card và đổ bóng */
-    .home-product-card:hover { 
-        transform: translateY(-8px); 
-        box-shadow: 0 15px 30px rgba(0,0,0,0.12) !important; 
-    }
-    
-    /* Zoom hình ảnh mượt mà */
-    .home-product-card img { 
-        transition: transform 0.6s ease; 
-    }
-    .home-product-card:hover img { 
-        transform: scale(1.08); 
-    }
-    
-    /* Đổi màu tiêu đề sản phẩm sang đỏ */
-    .home-product-card .product-title { 
-        transition: color 0.3s ease; 
-    }
-    .home-product-card:hover .product-title { 
-        color: #dc3545; 
-    }
-
-    /* ĐÃ THÊM: Hiệu ứng nút MUA NGAY (CHỈ THÊM) */
-    .btn-lg:hover {
-        transform: scale(1.05);
-        transition: 0.3s;
-    }
-
-    /* ============================================== */
-
-    /* --- CSS CHO BĂNG CHUYỀN CHẠY MÃI MÃI --- */
-    .marquee-container {
-        width: 100%;
-        overflow: hidden;
-        padding: 20px 0;
-        position: relative;
-    }
-
-    .marquee-track {
-        display: flex; 
-        width: max-content; 
-        animation: scroll-marquee 30s linear infinite; 
-    }
-
-    .marquee-container:hover .marquee-track {
-        animation-play-state: paused; 
-    }
-
-    .marquee-content {
-        display: flex; 
-    }
-
-    .brand-item {
-        flex: 0 0 auto;
-        padding: 0 10px; 
-    }
-
-    .brand-card { 
-        width: 180px; 
-        height: 90px; 
-        border-radius: 12px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        transition: transform 0.3s ease;
-        background-color: #fff !important;
-    }
-
-    .brand-card:hover { 
-        transform: scale(1.08); 
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
-        z-index: 10;
-    }
-
-    .brand-logo-img {
-        max-width: 80%;
-        max-height: 55px;
-        object-fit: contain;
-    }
-
-    /* Hiệu ứng lặp vô tận */
-    @keyframes scroll-marquee {
-        from { transform: translateX(0); }
-        to { transform: translateX(-50%); } 
-    }
+    .custom-scroll::-webkit-scrollbar { height: 4px; }
 </style>
 {% endblock %}

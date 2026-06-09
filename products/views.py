@@ -1,14 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect # ĐÃ THÊM: redirect
 from django.db.models import Q, F  # Dùng để so sánh 2 cột
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # BẮT BUỘC IMPORT ĐỂ PHÂN TRANG
-from .models import Product, Category, Brand, StorePolicy, Size, Sale, Review # ĐÃ THÊM: Review
-from .forms import ReviewForm # ĐÃ THÊM: ReviewForm
+from .models import Product, Category, Brand, StorePolicy, Size, Sale, Review, Wishlist # Thêm Wishlist
+from .forms import ReviewForm
 from django.utils import timezone
-from django.contrib import messages # ĐÃ THÊM: messages
+from django.contrib import messages
+from django.http import JsonResponse
 
-# --- PHẦN THÊM MỚI (CHỈ THÊM) ---
+# --- PHẦN THÊM MỚI ---
 from django.contrib.auth.decorators import login_required
-from orders.models import Order 
+from orders.models import Order, OrderItem 
 # ------------------------------
 
 def home(request):
@@ -85,53 +86,88 @@ def product_list(request):
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    # Lấy chính sách chung
     policy = StorePolicy.objects.first() 
-    # Sản phẩm đề cử: ưu tiên cùng category, loại trừ product hiện tại
-    recommended = Product.objects.filter(category__in=product.category.all(), is_active=True).exclude(pk=product.pk).distinct()
-    # Nếu không đủ, thêm theo brand
-    if recommended.count() < 6:
-        more = Product.objects.filter(brand=product.brand, is_active=True).exclude(pk=product.pk).distinct()
-        # Kết hợp và loại trùng
-        recommended = (recommended | more).distinct()
-
-    # Fallback: nếu vẫn ít, lấy sản phẩm mới nhất
-    if recommended.count() < 6:
+    
+    # Sản phẩm cùng thương hiệu
+    same_brand_products = Product.objects.filter(brand=product.brand, is_active=True).exclude(pk=product.pk).distinct()[:4]
+    
+    # Có thể bạn thích (ưu tiên cùng category)
+    related_products = Product.objects.filter(category__in=product.category.all(), is_active=True).exclude(pk=product.pk).distinct()
+    if related_products.count() < 4:
         fallback = Product.objects.filter(is_active=True).exclude(pk=product.pk).order_by('-id')
-        # Tìm dòng 75 và sửa thành như sau:
-        recommended_ids = list(recommended.values_list('id', flat=True)) + \
-                        list(fallback.values_list('id', flat=True))
+        related_ids = list(related_products.values_list('id', flat=True)) + list(fallback.values_list('id', flat=True))
+        related_products = Product.objects.filter(id__in=related_ids).distinct().order_by('?')[:4]
+    else:
+        related_products = related_products.order_by('?')[:4]
 
-        recommended = Product.objects.filter(id__in=recommended_ids).distinct()
+    # Kiểm tra Wishlist
+    is_in_wishlist = False
+    has_purchased = False
+    if request.user.is_authenticated:
+        is_in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
+        has_purchased = OrderItem.objects.filter(
+            order__user=request.user,
+            order__status__in=['Completed', 'Đã thanh toán'],
+            product=product
+        ).exists()
 
-        recommended = recommended.order_by('?')[:8]
-
-    # === CHỈ THÊM: Logic xử lý Đánh giá sản phẩm ===
+    # Logic xử lý Đánh giá sản phẩm
     reviews = product.reviews.all().order_by('-created_at')
     if request.method == 'POST':
         if not request.user.is_authenticated:
             messages.error(request, "Bạn cần đăng nhập để đánh giá!")
             return redirect('login')
-        form = ReviewForm(request.POST)
+            
+        if not has_purchased:
+            messages.error(request, "Bạn cần mua và nhận thành công sản phẩm này trước khi đánh giá!")
+            return redirect('products:product_detail', pk=pk)
+            
+        form = ReviewForm(request.POST, request.FILES)
         if form.is_valid():
             review = form.save(commit=False)
             review.product = product
             review.user = request.user
+            review.is_verified_purchase = True
             review.save()
             messages.success(request, "Đánh giá của bạn đã được gửi!")
             return redirect('products:product_detail', pk=pk)
     else:
         form = ReviewForm()
-    # =============================================
 
     context = {
         'product': product,
         'policy': policy,
-        'recommended_products': recommended,
-        'reviews': reviews, # THÊM VÀO CONTEXT
-        'form': form,       # THÊM VÀO CONTEXT
+        'same_brand_products': same_brand_products,
+        'related_products': related_products,
+        'reviews': reviews,
+        'form': form,
+        'is_in_wishlist': is_in_wishlist,
+        'has_purchased': has_purchased,
     }
     return render(request, 'products/product_detail.html', context)
+
+# ==========================================
+# WISHLIST VIEWS
+# ==========================================
+@login_required
+def toggle_wishlist(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+        
+        if not created:
+            # Nếu đã có thì xóa (unlike)
+            wishlist_item.delete()
+            return JsonResponse({'added': False, 'message': 'Đã bỏ yêu thích'})
+        
+        return JsonResponse({'added': True, 'message': 'Đã thêm vào yêu thích'})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def wishlist_page(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    products = [item.product for item in wishlist_items if item.product.is_active]
+    return render(request, 'products/wishlist.html', {'products': products})
 
 # ==========================================
 # HÀM TÌM KIẾM SẢN PHẨM (ĐÃ THÊM VALIDATION)

@@ -11,57 +11,123 @@ import logging
 
 # THÊM MỚI: Import thêm thư viện gửi mail và Model OTP
 from django.core.mail import send_mail
-from .models import PasswordResetOTP, UserProfile
+from .models import PasswordResetOTP, UserProfile, ShippingAddress
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
+from orders.models import Order
 
 
 logger = logging.getLogger(__name__)
 
-# HÀM XỬ LÝ ĐĂNG KÝ (GIỮ NGUYÊN)
+import re
+import uuid
+
+# HÀM XỬ LÝ ĐĂNG KÝ
 def register_view(request):
     if request.method == 'POST':
-        username = (request.POST.get('username') or '').strip()
+        full_name = (request.POST.get('full_name') or '').strip()
         email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
         password = request.POST.get('password') or ''
         confirm_password = request.POST.get('confirm_password') or ''
 
-        if not username:
-            messages.error(request, 'Tên đăng nhập không được để trống!')
-            return redirect('register')
+        # TC_02: Trống tất cả các trường
+        if not full_name and not email and not phone and not password and not confirm_password:
+            messages.error(request, 'Vui lòng nhập đầy đủ ở tất cả các trường.')
+            return render(request, 'register.html')
 
+        # TC_03: Bỏ trống trường Họ tên
+        if not full_name:
+            messages.error(request, 'Vui lòng nhập họ tên')
+            return render(request, 'register.html')
+            
+        # TC_04: Bỏ trống trường Email
         if not email:
-            messages.error(request, 'Email không được để trống!')
-            return redirect('register')
+            messages.error(request, 'Vui lòng nhập email')
+            return render(request, 'register.html')
 
-        try:
-            validate_email(email)
-        except ValidationError:
-            messages.error(request, 'Email không hợp lệ!')
-            return redirect('register')
+        # Thêm check cho SĐT
+        if not phone:
+            messages.error(request, 'Vui lòng nhập số điện thoại')
+            return render(request, 'register.html')
 
-        if password != confirm_password:
-            messages.error(request, 'Mật khẩu xác nhận không khớp!')
-            return redirect('register')
+        # TC_05: Bỏ trống trường Mật khẩu
+        if not password:
+            messages.error(request, 'Vui lòng nhập mật khẩu')
+            return render(request, 'register.html')
 
-        try:
-            validate_password(password)
-        except ValidationError as e:
-            messages.error(request, ' '.join(e.messages))
-            return redirect('register')
+        # TC_06: Bỏ trống trường Xác nhận mật khẩu
+        if not confirm_password:
+            messages.error(request, 'Vui lòng xác nhận mật khẩu')
+            return render(request, 'register.html')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Tên đăng nhập đã tồn tại!')
-            return redirect('register')
+        # TC_15: Tên chứa ký tự đặc biệt
+        if re.search(r'[^a-zA-ZÀ-ỹ\s]', full_name):
+            messages.error(request, 'Họ tên không được chứa ký tự đặc biệt')
+            return render(request, 'register.html')
 
+        # TC_17: Giới hạn độ dài trường Họ tên
+        if len(full_name) > 50:
+            messages.error(request, 'Họ tên vượt quá 50 ký tự')
+            return render(request, 'register.html')
+
+        # TC_07, TC_08, TC_19: Định dạng Email không hợp lệ
+        if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
+            messages.error(request, 'Email không đúng định dạng')
+            return render(request, 'register.html')
+
+        # TC_09: Email đã tồn tại trong hệ thống
         if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email này đã được sử dụng!')
-            return redirect('register')
+            messages.error(request, 'Email này đã được sử dụng')
+            return render(request, 'register.html')
+
+        # TC_10: Mật khẩu và Xác nhận mật khẩu không khớp
+        if password != confirm_password:
+            messages.error(request, 'Mật khẩu xác nhận không khớp')
+            return render(request, 'register.html')
+
+        # TC_11: Mật khẩu quá ngắn
+        if len(password) < 8:
+            messages.error(request, 'Mật khẩu phải có ít nhất 8 ký tự')
+            return render(request, 'register.html')
+
+        # TC_12: Mật khẩu thiếu ký tự đặc biệt/số (và chữ hoa theo yêu cầu TC)
+        if not (re.search(r'[A-Z]', password) and re.search(r'[0-9]', password) and re.search(r'[^A-Za-z0-9]', password)):
+            messages.error(request, 'Mật khẩu phải chứa chữ hoa, số và ký tự đặc biệt')
+            return render(request, 'register.html')
+
+        # TC_13: Số điện thoại chứa chữ cái
+        if not phone.isdigit():
+            messages.error(request, 'Số điện thoại chỉ được chứa chữ số')
+            return render(request, 'register.html')
+
+        # TC_14: Số điện thoại quá ngắn (chuẩn VN là 10 số)
+        if len(phone) < 10:
+            messages.error(request, 'Số điện thoại không hợp lệ')
+            return render(request, 'register.html')
+
+        # TC_18: Đăng ký với SĐT đã tồn tại
+        if UserProfile.objects.filter(phone=phone).exists():
+            messages.error(request, 'Số điện thoại đã được đăng ký')
+            return render(request, 'register.html')
+
+        # TC_01: Đăng ký thành công với dữ liệu hợp lệ
+        parts = full_name.split(' ', 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ''
+
+        # Tạo username duy nhất từ email và UUID (chống trùng lặp cho User model của Django)
+        base_username = email.split('@')[0]
+        username = f"{base_username}_{str(uuid.uuid4())[:8]}"
 
         user = User.objects.create_user(username=username, email=email, password=password)
+        user.first_name = first_name
+        user.last_name = last_name
         user.save()
+
+        UserProfile.objects.create(user=user, phone=phone)
         
-        messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
+        messages.success(request, 'Đăng ký thành công.')
         return redirect('login')
 
     return render(request, 'register.html')
@@ -289,8 +355,76 @@ def profile_view(request):
 
         return redirect('profile')
 
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    addresses = request.user.shipping_addresses.all()
+    wishlist_count = request.user.wishlists.count() if hasattr(request.user, 'wishlists') else 0
+
     context = {
         'user': user,
         'profile': profile,
+        'orders': orders,
+        'addresses': addresses,
+        'wishlist_count': wishlist_count,
     }
     return render(request, 'users/profile.html', context)
+
+@login_required(login_url='login')
+def add_address(request):
+    if request.method == 'POST':
+        # Limit to 5 addresses
+        if request.user.shipping_addresses.count() >= 5:
+            messages.error(request, 'Bạn chỉ được lưu tối đa 5 địa chỉ.')
+            return redirect('profile')
+            
+        label = request.POST.get('label', 'Nhà')
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        address = request.POST.get('address', '').strip()
+        
+        is_default = request.POST.get('is_default') == 'on'
+        
+        if not full_name or not phone or not address:
+            messages.error(request, 'Vui lòng nhập đầy đủ thông tin địa chỉ.')
+            return redirect('profile')
+            
+        if is_default:
+            request.user.shipping_addresses.update(is_default=False)
+            
+        is_first = request.user.shipping_addresses.count() == 0
+            
+        ShippingAddress.objects.create(
+            user=request.user,
+            label=label,
+            full_name=full_name,
+            phone=phone,
+            address=address,
+            is_default=is_default or is_first
+        )
+        messages.success(request, 'Thêm địa chỉ thành công.')
+    return redirect('profile')
+
+@login_required(login_url='login')
+def delete_address(request, address_id):
+    if request.method == 'POST':
+        address = ShippingAddress.objects.filter(id=address_id, user=request.user).first()
+        if address:
+            was_default = address.is_default
+            address.delete()
+            if was_default:
+                new_default = request.user.shipping_addresses.first()
+                if new_default:
+                    new_default.is_default = True
+                    new_default.save()
+            messages.success(request, 'Đã xóa địa chỉ.')
+    return redirect('profile')
+
+@login_required(login_url='login')
+def set_default_address(request, address_id):
+    if request.method == 'POST':
+        address = ShippingAddress.objects.filter(id=address_id, user=request.user).first()
+        if address:
+            request.user.shipping_addresses.update(is_default=False)
+            address.is_default = True
+            address.save()
+            messages.success(request, 'Đã cập nhật địa chỉ mặc định.')
+    return redirect('profile')

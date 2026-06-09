@@ -20,4 +20,9 @@ urlpatterns = [
     
     # Tính năng cập nhật thông tin cá nhân
     path('profile/', views.profile_view, name='profile'),
+    
+    # Sổ địa chỉ
+    path('address/add/', views.add_address, name='add_address'),
+    path('address/delete/<int:address_id>/', views.delete_address, name='delete_address'),
+    path('address/set-default/<int:address_id>/', views.set_default_address, name='set_default_address'),
 ]

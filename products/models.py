@@ -105,6 +105,20 @@ class Product(models.Model):
         verbose_name = "Sản phẩm"
         verbose_name_plural = "Sản phẩm"
 
+# --- PRODUCT VARIANT (SIZE STOCK) ---
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    size = models.ForeignKey(Size, on_delete=models.CASCADE)
+    stock = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho (Theo Size)")
+
+    class Meta:
+        verbose_name = "Biến thể sản phẩm (Size)"
+        verbose_name_plural = "Biến thể sản phẩm (Size)"
+        unique_together = ('product', 'size')
+
+    def __str__(self):
+        return f"{self.product.name} - Size {self.size.value} - Kho: {self.stock}"
+
 
 # --- PRODUCT IMAGES (EXTRA) ---
 class ProductImage(models.Model):
@@ -137,6 +151,8 @@ class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=RATING_CHOICES, default=5, verbose_name="Số sao")
     comment = models.TextField(verbose_name="Nội dung đánh giá")
+    is_verified_purchase = models.BooleanField(default=False, verbose_name="Đã mua hàng")
+    image = models.ImageField(upload_to='review_images/', blank=True, null=True, verbose_name="Ảnh đánh giá")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -271,3 +287,17 @@ class SalesReport(Product):
         proxy = True
         verbose_name = "Báo cáo doanh thu"
         verbose_name_plural = "Báo cáo doanh thu"
+
+# --- WISHLIST ---
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+        verbose_name = "Danh sách yêu thích"
+        verbose_name_plural = "Danh sách yêu thích"
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
